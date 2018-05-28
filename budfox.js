@@ -9,4 +9,17 @@ let budfox = function (config) {
 Readable.call( this,{objectMode:true});
 
 }
-let Reabable = require('stream').Readable;
+let Readable = require('stream').Readable;
+budfox.prototype = Object.create(Readable.prototype, {
+    constructor:
+        {
+            value:budfox
+        }
+});
+//No callback is given
+budfox.prototype._read=function noop() {
+
+}
+budfox.prototype.pushCandles = function(candles){
+    a.each(candles,this.push);
+}
