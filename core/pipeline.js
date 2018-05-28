@@ -63,7 +63,7 @@ let pipeline=(set)=>{
     });
     next();
   }
-  let prepareMArket=(next)=>{
+  let prepareMarket=(next)=>{
     if(mode==='backtest' && config.backtest.daterange==='scan')
       require(dirs.core+'prepareDateRange')(next);
     else
@@ -72,7 +72,7 @@ let pipeline=(set)=>{
   log.info('Setting up Gekko in',mode,'mode');
   log.info('');
   async.series(
-      loadPlugins,
+      loadPlugins,referenceEmitters,subscribePlugins,prepareMarket
   )
 
 }
