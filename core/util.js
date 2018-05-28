@@ -1,7 +1,9 @@
-//modeules required
+//modules required
 let retry = require("retry");
 let fs = require('fs');
 let moment = require('moment');
+let program = require('commander');
+
 
 let _config = false;
 let _package = false;
@@ -57,14 +59,49 @@ function launchUI(){
 //function to set the gekkoEnc variable
 function setGekkoEnv(env) {
 	_gekkoEnv = env;
-},
+}
   
 //function to get gekToEnv
 function gekkoEnv() {
     return _gekkoEnv || 'standalone';
-},
+}
+
+//function to call retryHelper according to the parameter
+function retryCustom(options, fn, callback) {
+    retryHelper(fn, options, callback);
+}
+
+//function to call retryHelper setting maxTimeout and minTimeout
+function retry1(fn, callback) {
+    let options = {
+      retries: 5,
+      factor: 1.2,
+      minTimeout: 1 * 1000,
+      maxTimeout: 3 * 1000
+    };
+    retryHelper(fn, options, callback);
+}
+
+//function to declare all three modes of gekko
+function gekkoModes() {
+	let a=['importer','backtest','realtime']
+    return a;
+}
+
+//check the mode of gekko if gekkomode is set
+function gekkoMode() {
+    if(_gekkoMode)
+      return _gekkoMode;
+
+    if(program.importer)
+      return 'importer';
+    else if(program.backtest)
+      return 'backtest';
+    else if(program.realtime)   
+      return 'realtime';
+}
 
 
 
-console.log(equals(5,2));
-console.log(getPackage());
+
+//console.log(gekkoMode());
