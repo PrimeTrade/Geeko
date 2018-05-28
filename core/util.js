@@ -174,5 +174,10 @@ function getRequiredNodeVersion() {
     return util.getPackage().engines.node;
 }
 
+function recentNode{
+    let required = util.getRequiredNodeVersion();
+    return semver.satisfies(process.version, required);
+}
+
 
 //console.log(gekkoMode());
