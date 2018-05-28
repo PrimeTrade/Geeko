@@ -72,7 +72,21 @@ let pipeline=(set)=>{
   log.info('Setting up Gekko in',mode,'mode');
   log.info('');
   async.series(
-      loadPlugins,referenceEmitters,subscribePlugins,prepareMarket
-  )
+      [loadPlugins,referenceEmitters,subscribePlugins,prepareMarket],()=>{
+          let marketType;
+          if(config.market)
+              marketType=config.market.type;
+          else
+              marketType=mode;
+          let Market=require(dirs.markets+marketType);
+          let market=new Market(config);
+          let gekko=new GekkoStream(candleConsumers);
+          market.pipe(gekko)
+          market.on('end',gekko.finalize);
+
+
+      }
+  );
 
 }
+module.exports=pipeline;
