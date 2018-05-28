@@ -34,5 +34,21 @@ let pipeline=(set)=>{
     });
     next();
   }
-  
+  let subscribePlugins=(next)=>{
+    let subscriptions=require(dirs.geeko+'subscriptions');
+    let pluginSubscriptions=_.filter(subscriptions,(sub)=>{
+      return sub.emitter!=='market';
+    });
+    plugins=plugins.concat(spies);
+    _.each(plugins,(plugin)=>{
+      _.each(pluginSubscriptions,(sub)=>{
+        if(_.has(plugin,sub.handler)){
+          if(!emitters[sub.emitter]){
+            
+          }
+        }
+
+      })
+    })
+  }
 }
