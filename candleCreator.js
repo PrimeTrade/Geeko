@@ -26,3 +26,9 @@ if(a.isEmpty(candle))
     this.threshold=candle.pop().start;
     this.emit('candle',candle);
 }
+candleCreator.prototype.filter=function (trade) {
+    return a.filter(trade,function (trade) {
+        return trade.date > this.threshold;
+    },
+    this);
+}
