@@ -34,6 +34,22 @@ function setConfig(config){
 	_config = config;
 }
 
+//to get the configuration of Gekko
+function getConfig() {
+
+    if(_config)
+      return _config;
+
+    if(!program.config)
+        util.die('Please specify a config file.', true);
+
+    if(!fs.existsSync(util.dirs().gekko + program.config))
+        util.die('Cannot find the specified config file.', true);
+
+    _config = require(util.dirs().gekko + program.config);
+    return _config;
+}
+
 //return the current package
 function getPackage(){
 	if(_package)
@@ -101,7 +117,33 @@ function gekkoMode() {
       return 'realtime';
 }
 
+function inherit(dest, source) {
+    require('util').inherits(dest,source);
+}
+  
+function makeEventEmitter(dest) {
+    util.inherit(dest, require('events').EventEmitter);
+}
 
+function die(m, soft) {
+    if(_gekkoEnv === 'standalone' || !_gekkoEnv)
+      var logs = console.log.bind(console);
+    else if(_gekkoEnv === 'child-process')
+      var logs = m => process.send({type: 'error', error: m});
 
+    if(m) {
+      if(soft) {
+        logs('\n ERROR: ' + m + '\n\n');
+      } else {
+        logs('\n\nGekko encountered an error and can\'t continue');
+        logs('\nError:\n');
+        logs(m, '\n\n');
+        logs('\nMeta debug info:\n');
+        logs(util.logVersion());
+        logs('');
+      }
+    }
+    process.exit(1);
+}
 
 //console.log(gekkoMode());
