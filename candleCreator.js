@@ -17,5 +17,5 @@ candleCreator.prototype.write=function (batch) {
         return;
     trade=this.filter(trade);
     this.fillBuckets(trade);
-    
+
 }
