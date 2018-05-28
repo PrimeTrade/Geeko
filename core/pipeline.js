@@ -16,6 +16,7 @@ let pipeline=(set)=>{
   let config=set.config;
   let plugins=[];//for all plugins
   let emitters={};//for emitted plugins
+  let candleConsumers=[];
   let pluginParameters=require(dirs.gekko + 'plugins');
   let pluginHelper=require(dirs.core + 'pluginUtil');
   let loadPlugins=(next)=>{
@@ -62,5 +63,16 @@ let pipeline=(set)=>{
     });
     next();
   }
-  
+  let prepareMArket=(next)=>{
+    if(mode==='backtest' && config.backtest.daterange==='scan')
+      require(dirs.core+'prepareDateRange')(next);
+    else
+      next();
+  }
+  log.info('Setting up Gekko in',mode,'mode');
+  log.info('');
+  async.series(
+      loadPlugins,
+  )
+
 }
