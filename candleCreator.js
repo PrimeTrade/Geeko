@@ -45,7 +45,7 @@ candleCreator.prototype.fillBuckets=function(trade){
 }
 
 //convert bucket into candle
-candleCreator.prototype.calculateCandle=function () {
+candleCreator.prototype.calculateCandles=function () {
     let minutes=a.size(this.buckets);
 
     //catch error from high volume getTrades
@@ -60,4 +60,26 @@ candleCreator.prototype.calculateCandle=function () {
         return candle;
     }this);
     return candles;
+}
+candleCreator.prototype.calculateCandle=function (trade) {
+    let first=a.first(trades);
+    let b = parseFloat;
+    let candle={
+        start: first.date.clone().startOf('minute'),
+        open: b(first.price),
+        high: b(first.price),
+        low: b(first.price),
+        close: b(a.last(trade).price),
+        vwp:0,
+        volume: 0,
+        trades: a.size(trade)
+    };
+    a.each(trade,function(trade){
+        candle.high = a.max([candle.high, b(trade.price)]);
+        candle.low = a.max([candle.low, b(trade.price)]);
+        candle.volume += b(trade.amount);
+        candle.vwp += b(trade.price) * b(trade.amount);
+    });
+    candle.vwp /= candle.volume;
+    return candle;
 }
