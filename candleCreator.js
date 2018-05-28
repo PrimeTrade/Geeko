@@ -17,5 +17,12 @@ candleCreator.prototype.write=function (batch) {
         return;
     trade=this.filter(trade);
     this.fillBuckets(trade);
+let candle=this.calculateCandle();
+candle=this.addEmptyCandles(candle);
+if(a.isEmpty(candle))
+    return;
 
+//last candle is not complete
+    this.threshold=candle.pop().start;
+    this.emit('candle',candle);
 }
