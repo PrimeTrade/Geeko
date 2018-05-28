@@ -32,3 +32,14 @@ candleCreator.prototype.filter=function (trade) {
     },
     this);
 }
+//put each trade in per minute bucket
+candleCreator.prototype.fillBuckets=function(trade){
+    a.each(trade,function (trade) {
+        let minute=trade.date.format('YYYY-MM-DD HH:mm');
+
+        if(!(minute in this.buckets))
+            this.buckets[minute]=[];
+        this.buckets[minute].push(trade);
+    },this);
+    this.lastTrade=a.last(trade);
+}
