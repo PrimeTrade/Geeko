@@ -14,7 +14,8 @@ let pipeline=(set)=>{
   let spies=set.spies || [];
   let mode=set.mode;
   let config=set.config;
-  let plugins=[];
+  let plugins=[];//for all plugins
+  let emitters={};//for emitted plugins
   let pluginParameters=require(dirs.gekko + 'plugins');
   let pluginHelper=require(dirs.core + 'pluginUtil');
   let loadPlugins=(next)=>{
@@ -26,5 +27,12 @@ let pipeline=(set)=>{
 
     });
   };
+  let referenceEmitters=(next)=>{
+    _.each(plugins,(plugin)=>{
+      if(plugin.meta,emits)
+        emitters[plugin.meta.slug]=plugin;
+    });
+    next();
+  }
   
 }
