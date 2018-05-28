@@ -169,6 +169,10 @@ function dir() {
     }
 }
 
+//function to get the node version
+function getRequiredNodeVersion() {
+    return util.getPackage().engines.node;
+}
 
 
 //console.log(gekkoMode());
