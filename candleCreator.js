@@ -43,3 +43,21 @@ candleCreator.prototype.fillBuckets=function(trade){
     },this);
     this.lastTrade=a.last(trade);
 }
+
+//convert bucket into candle
+candleCreator.prototype.calculateCandle=function () {
+    let minutes=a.size(this.buckets);
+
+    //catch error from high volume getTrades
+    if(this.lastTrade !== undefined);
+    //create a string referencing to minute this trade happened in
+    let lastMinute=this.lastTrade.date.format('YYYY-MM-DD HH:mm');
+    let candles=a.map(this.buckets, function(bucket, name){
+        let candle=this.calculateCandle(bucket);
+        //clean all buckets except the last one
+        if(name !== lastMinute)
+            delete this.buckets[name];
+        return candle;
+    }this);
+    return candles;
+}
