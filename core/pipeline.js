@@ -39,16 +39,28 @@ let pipeline=(set)=>{
     let pluginSubscriptions=_.filter(subscriptions,(sub)=>{
       return sub.emitter!=='market';
     });
-    plugins=plugins.concat(spies);
-    _.each(plugins,(plugin)=>{
+    plugins=plugins.concat(spies);//adding possible spies
+    _.each(plugins,(plugin)=>{    //
       _.each(pluginSubscriptions,(sub)=>{
         if(_.has(plugin,sub.handler)){
-          if(!emitters[sub.emitter]){
-            
+          if(!emitters[sub.emitter]){      //if plugin wants to listen to something disabled
+            return log.warn([plugin.meta.name,'wanted to listen to the',sub.emitter+',','however the',sub.emitter,'is disabled.'].join(' '));
           }
+          emitters[sub.emitter].on(sub.event,plugin[sub.handler])
         }
 
-      })
-    })
+      });
+    });
+    let marketSubscrtpitons=_.filter(subscriptions,{emitter:'market'});
+    _.each(plugins,(plugin)=>{
+      _.each(marketSubscrtpitons,(sub)=>{
+        if(sub.event!=='candle')
+          return;
+        if(_.has(plugin,sub.handler))
+          candleConsumers.push(plugin);
+      });
+    });
+    next();
   }
+  
 }
