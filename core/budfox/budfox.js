@@ -23,3 +23,4 @@ budfox.prototype._read=function noop() {
 budfox.prototype.pushCandles = function(candles){
     a.each(candles,this.push);
 }
+
