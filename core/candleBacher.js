@@ -35,4 +35,32 @@ Candle.prototype.check = function() {
   this.smallCandles = [];
 }
 
-//try 
+//function for calculating candle values
+Candle.prototype.calculate = function() {
+  let first = this.smallCandles.shift();
+
+  first.vwp = first.vwp * first.volume;
+
+  let candle = lodash.reduce(this.smallCandles,function(candle, m) {
+      candle.high = lodash.max([candle.high, m.high]);
+      candle.low = lodash.min([candle.low, m.low]);
+      candle.close = m.close;
+      candle.volume += m.volume;
+      candle.vwp += m.vwp * m.volume;
+      candle.trades += m.trades;
+      return candle;
+    },first
+  );
+
+  if(candle.volume)
+    candle.vwp /= candle.volume;
+  else
+    candle.vwp = candle.open;
+
+  candle.start = first.start;
+  return candle;
+}
+
+module.exports = CandleBatcher;
+
+//checkSize("kushagra");
