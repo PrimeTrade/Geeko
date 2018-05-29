@@ -16,4 +16,14 @@ let Manager = function () {
         cp.firstCandle(candle);
 })
 };
-
+util.makeEventEmitter(Manager);
+Manager.prototype.processTrades = function (tradeBatch) {
+    this.candleCreator.write(tradeBatch);
+}
+Manager.prototype.relayCandles = function (candles) {
+    this.emit('candles',candles);
+    if(!a.size(candles))
+        return;
+    this.messageFirstCandle(a.first(candles));
+    cp.lastCandle(a.last(candles));
+}
