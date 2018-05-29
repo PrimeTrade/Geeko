@@ -25,13 +25,13 @@ Checker.prototype.cantMonitor = function(conf) {
 
   name = exchange.name;
 
-  if(!_.contains(exchange.currencies, conf.currency))
+  if(!lodash.contains(exchange.currencies, conf.currency))
     return 'Gekko only supports the currencies [ ' + exchange.currencies.join(', ') + ' ] at ' + name + ' (not ' + conf.currency + ')';
 
-  if(!_.contains(exchange.assets, conf.asset))
+  if(!lodash.contains(exchange.assets, conf.asset))
     return 'Gekko only supports the assets [ ' + exchange.assets.join(', ') + ' ]  at ' + name + ' (not ' + conf.asset + ')';
 
-  let pair = _.find(exchange.markets, function(p) {
+  let pair = lodash.find(exchange.markets, function(p) {
     return p.pair[0] === conf.currency && p.pair[1] === conf.asset;
   });
 
@@ -61,7 +61,7 @@ Checker.prototype.cantTrade = function(conf) {
     return '"your-secret" is not a valid API secret';
 
   let error = false;
-  _.each(exchange.requires, function(req) {
+  lodash.each(exchange.requires, function(req) {
     if(!conf[req])
       error = name + ' requires "' + req + '" to be set in the config';
   }, this);
@@ -69,4 +69,9 @@ Checker.prototype.cantTrade = function(conf) {
   return error;
 }
 
+var Checker = function() {
+  lodash.bindAll(this);
+}
 
+
+module.exports = new Checker();

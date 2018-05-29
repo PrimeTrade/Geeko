@@ -3,7 +3,7 @@
 let lodash = require("lodash");
 
 let candleSize, smallCandles;
-function checkSize(candleSize) {
+function candle(candleSize) {
   if(!lodash.isNumber(candleSize))
     throw 'candleSize is not a number';
 
@@ -61,6 +61,6 @@ Candle.prototype.calculate = function() {
   return candle;
 }
 
-module.exports = CandleBatcher;
+module.exports = Candle;
 
 //checkSize("kushagra");
