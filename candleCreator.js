@@ -58,7 +58,7 @@ candleCreator.prototype.calculateCandles=function () {
         if(name !== lastMinute)
             delete this.buckets[name];
         return candle;
-    }this);
+    },this);
     return candles;
 }
 candleCreator.prototype.calculateCandle=function (trade) {
@@ -82,4 +82,38 @@ candleCreator.prototype.calculateCandle=function (trade) {
     });
     candle.vwp /= candle.volume;
     return candle;
+}
+//Gekko expects candle every minute,if nothing happened it will add empty candles
+candleCreator.prototype.addEmptyCandles=function (candles) {
+    let amount=a.size(candles);
+    if(!amount)
+        return candles;
+
+    let start=a.first(candles).start.clone();
+    let end=a.last(candles).start;
+    let x,y=-1;
+let minutes = a.map(candles,function (candle) {
+    return +candle.start;
+});
+while(start<end){
+    start.add(1,'min');
+    x = +start;
+    y++;
+
+    if(a.contains(minutes,x))
+        continue;
+    let lastprice = candles[y].close;
+
+    candles.splice(y + 1,0, {
+        start: start.clone,
+        open: lastprice,
+        high: lastprice,
+        low: lastprice,
+        close: lastprice,
+        vwp: lastprice,
+        volume: 0,
+        trades: 0
+    });
+}
+return candles;
 }
