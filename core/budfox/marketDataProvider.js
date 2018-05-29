@@ -28,3 +28,4 @@ Manager.prototype.sendStartAt = a.once(function (batch) {
 
 });
 
+module.exports = Manager;
