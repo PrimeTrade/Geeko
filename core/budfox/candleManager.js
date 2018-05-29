@@ -27,3 +27,4 @@ Manager.prototype.relayCandles = function (candles) {
     this.messageFirstCandle(a.first(candles));
     cp.lastCandle(a.last(candles));
 }
+module.exports = Manager;
