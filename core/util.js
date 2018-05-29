@@ -192,5 +192,17 @@ let retryHelper = function(fn, options, callback) {
   });
 }
 
+
+// make sure the current node version is recent enough
+if(!util.recentNode())
+  util.die([
+    'Node js version too old that ',
+    'You have ',
+    process.version,
+    ' and you need atleast ',
+    util.getRequiredNodeVersion()
+  ].join(''), true);
+
+
 module.exports = util;
 //console.log(gekkoMode());
