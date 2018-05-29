@@ -1,4 +1,9 @@
 let lodash = require('lodash');
+let util = require('./utils');
+
+
+var config = util.getConfig();
+var dirs = util.dirs();
 
 let Checker = function() {
   lodash.bindAll(this);
@@ -69,9 +74,16 @@ Checker.prototype.cantTrade = function(conf) {
   return error;
 }
 
-var Checker = function() {
-  lodash.bindAll(this);
-}
+Checker.prototype.getExchangeCapabilities = function(slug) {
+  var capabilities;
 
+  if(!fs.existsSync(dirs.exchanges + slug + '.js'))
+    util.die(`Gekko does not know exchange "${slug}"`);
+
+  var Trader = require(dirs.exchanges + slug);
+  capabilities = Trader.getCapabilities();
+
+  return capabilities;
+}
 
 module.exports = new Checker();
