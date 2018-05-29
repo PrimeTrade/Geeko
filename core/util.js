@@ -174,7 +174,7 @@ function getRequiredNodeVersion() {
     return util.getPackage().engines.node;
 }
 
-function recentNode{
+function recentNode(){
     let required = util.getRequiredNodeVersion();
     return semver.satisfies(process.version, required);
 }
@@ -194,6 +194,7 @@ let retryHelper = function(fn, options, callback) {
 
 
 // make sure the current node version is recent enough
+function check(){
 if(!util.recentNode())
   util.die([
     'Node js version too old that ',
@@ -202,7 +203,7 @@ if(!util.recentNode())
     ' and you need atleast ',
     util.getRequiredNodeVersion()
   ].join(''), true);
+}
 
-
-module.exports = util;
+//module.exports = util;
 //console.log(gekkoMode());
