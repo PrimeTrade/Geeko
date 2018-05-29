@@ -6,7 +6,7 @@
   all enabled plugins are actually supported by that market.
 */
 
-let uitl = require('/.util');
+let util = require('/.util');
 let _ = require('lodash');
 let dirs=util.dirs();
 let async = require('async');
@@ -14,6 +14,7 @@ let pipeline=(set)=>{
   let spies=set.spies || [];
   let mode=set.mode;
   let config=set.config;
+  let GekkoStream=require(dirs.core+'gekkoStream');
   let plugins=[];//for all plugins
   let emitters={};//for emitted plugins
   let candleConsumers=[];
