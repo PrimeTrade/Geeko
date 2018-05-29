@@ -179,5 +179,18 @@ function recentNode{
     return semver.satisfies(process.version, required);
 }
 
+let retryHelper = function(fn, options, callback) {
+  let operation = retry.operation(options);
+  operation.attempt(function(currentAttempt) {
+    fn(function(err, result) {
+      if (!(err instanceof Errors.AbortError) && operation.retry(err)) {
+        return;
+      }
 
+      callback(err ? err.message : null, result);
+    });
+  });
+}
+
+module.exports = util;
 //console.log(gekkoMode());
