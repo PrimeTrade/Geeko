@@ -117,3 +117,4 @@ while(start<end){
 }
 return candles;
 }
+module.exports= candleCreator;
