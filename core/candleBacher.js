@@ -34,3 +34,5 @@ Candle.prototype.check = function() {
   this.emit('candle', this.calculate());
   this.smallCandles = [];
 }
+
+//try 
