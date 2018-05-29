@@ -34,3 +34,4 @@ Heart.prototype.scheduleTicks = function () {
     a.defer(this.tick);
 }
 
+module.exports = Heart;
