@@ -1,7 +1,7 @@
 let lodash = require('lodash');
 let util = require('./utils');
 
-
+//variable for storing configuration
 var config = util.getConfig();
 var dirs = util.dirs();
 
@@ -9,6 +9,7 @@ let Checker = function() {
   lodash.bindAll(this);
 }
 
+//to redirect flow to cantTrade and cantMonitor 
 Checker.prototype.notValid = function(conf) {
   if(conf.tradingEnabled)
     return this.cantTrade(conf);
@@ -16,6 +17,7 @@ Checker.prototype.notValid = function(conf) {
     return this.cantMonitor(conf);
 }
 
+//gekko is not ready for exchange 
 Checker.prototype.cantMonitor = function(conf) {
   let slug = conf.exchange.toLowerCase();
   let exchange = this.getExchangeCapabilities(slug);
@@ -47,6 +49,7 @@ Checker.prototype.cantMonitor = function(conf) {
   return false;
 }
 
+//function when user caant trade
 Checker.prototype.cantTrade = function(conf) {
   let cantMonitor = this.cantMonitor(conf);
   if(cantMonitor)
@@ -74,13 +77,15 @@ Checker.prototype.cantTrade = function(conf) {
   return error;
 }
 
+//get capabilities and call util die
 Checker.prototype.getExchangeCapabilities = function(slug) {
-  var capabilities;
+  let capabilities;
 
   if(!fs.existsSync(dirs.exchanges + slug + '.js'))
     util.die(`Gekko does not know exchange "${slug}"`);
+//util.die halt the process System.exit(1)
 
-  var Trader = require(dirs.exchanges + slug);
+  let Trader = require(dirs.exchanges + slug);
   capabilities = Trader.getCapabilities();
 
   return capabilities;
