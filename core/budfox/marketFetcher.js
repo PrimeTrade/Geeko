@@ -71,6 +71,6 @@ Fetcher.prototype.processTrades = function (err,trades) {
     this.batcher.write(trades);
 }
 Fetcher.prototype.relayTrades = function(batch){
-    this..emit('batch trades',batch);
+    this.emit('batch trades',batch);
 }
 module.exports = Fetcher;
