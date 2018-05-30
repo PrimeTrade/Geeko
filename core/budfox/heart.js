@@ -1,5 +1,7 @@
-let util = require(_dirname + 'util');
-let a= require('lodash');
+let util = require(__dirname + '/../util');
+let log = require(util.dirs().core + 'log');
+
+let _= require('lodash');
 let moment = require('moment');
 
 if( util.getConfig().watch.tickrate)
@@ -18,9 +20,15 @@ let Heart = function () {
 util.makeEventEmitter(Heart);
 
 Heart.prototype.pump = function () {
+    log.debug('scheduling ticks');
+    this.scheduleTicks();
+}
+Heart.prototype.tick = function () {
+
+
     if(this.lastTick){
 
-        if(this.lastTick < moment().unix() - TICKRATING*3)
+        if(this.lastTick < moment().unix() - TICKRATE * 3)
             util.die('Failed to tick in time',true);
     }
     this.lastTick = moment().unix();
@@ -29,9 +37,9 @@ Heart.prototype.pump = function () {
 Heart.prototype.scheduleTicks = function () {
     setInterval(
         this.tick,
-        +moment.duration(TICKRATING, 'sec')
+        +moment.duration(TICKRATE, 'sec')
     );
-    a.defer(this.tick);
+    _.defer(this.tick);
 }
 
 module.exports = Heart;

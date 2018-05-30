@@ -1,13 +1,18 @@
 //Fetching new market data at the exchange on interval.
-let a = require('lodash');
+let _ = require('lodash');
 let moment = require('moment');
-let util = require('util');
-let Fetcher = function (config) {
-    if(!a.isObject(config))
+let utc = moment.utc;
+let util = require(__dirname + '/../util');
+let config = util.getConfig();
+let log = require(util.dirs().core +'log');
+let exchangeChecker = require(util.dirs().core + 'exchangeChecker');
+let tradeBatcher = require(util.dirs().budfox + 'tradeBatcher');
+let  Fetcher = function (config) {
+    if(!_.isObject(config))
         throw 'Tradefetcher expects a config';
     let exchangeN = config.watch.exchange.toLowerCase();
-    let DataProvider;
-    a.bindAll(this);
+    let DataProvider = require(util.dirs().gekko + 'exchanges/' + exchangeName);
+    _.bindAll(this);
     //Create a public data provider object which can retrieve live  trade information from an exchange
     this.exchangeTrader =new DataProvider(config.watch);
     this.exchange = exchangeChecker.settings(config.watch);
@@ -27,6 +32,12 @@ let Fetcher = function (config) {
         config.watch.currency
     ].join('/');
 //if exchanges returns an error we will keep on retrying until next scheduled fetch
+    this.tries = 0;
+    this.limit = 20;
+    log.info('Starting to watch the market: ',
+    this.exchange.name,
+    this.pair
+    );
     this.tries = 0;
     this.limit = 20;
 
@@ -55,16 +66,15 @@ Fetcher.prototype.fetch = function () {
     this.fetch(since);
 }
 Fetcher.prototype.processTrades = function (err,trades) {
-    if(err || a.isEmpty(trades))
+    if(err || _.isEmpty(trades))
     {
         if(err)
         {
-
+            log.warn(this.exchange.name, 'returned an error while fetching trades: ',err);
+            log.debug('refetching...');
         }
         else
-        {
-
-        }
+        log.debug('Trade fetch came back empty, refetching... ');
         setTimeout(this.fetch, +moment.duration('sec',1));
         return;
     }

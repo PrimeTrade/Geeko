@@ -1,18 +1,23 @@
 //CandleManager consumes trades and emits
-let a = require('lodash');
+let _ = require('lodash');
 let moment = require('moment');
 let fs = require('fs');
 
-let util = require('util');
+let util = require(__dirname + '/../util');
+let dirs = util.dirs();
+let config = util.getConfig();
+let log = require(dirs.core + 'log');
+let cp = require(dirs.core + 'core');
+let CandleCreator = require(dirs.budfox + 'candleCreator');
 
 
 
 
 let Manager = function () {
-    a.bindAll(this);
+    _.bindAll(this);
     this.candleCreator = new CandleCreator;
     this.candleCreator.on('candles',this.relayCandles);
-    this.messageFirstCandle = a.once(candle => {
+    this.messageFirstCandle = _.once(candle => {
         cp.firstCandle(candle);
 })
 };
@@ -22,9 +27,9 @@ Manager.prototype.processTrades = function (tradeBatch) {
 }
 Manager.prototype.relayCandles = function (candles) {
     this.emit('candles',candles);
-    if(!a.size(candles))
+    if(!_.size(candles))
         return;
-    this.messageFirstCandle(a.first(candles));
-    cp.lastCandle(a.last(candles));
+    this.messageFirstCandle(_.first(candles));
+    cp.lastCandle(_.last(candles));
 }
 module.exports = Manager;
