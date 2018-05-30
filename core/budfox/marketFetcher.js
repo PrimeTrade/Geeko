@@ -26,6 +26,51 @@ let Fetcher = function (config) {
         config.watch.asset,
         config.watch.currency
     ].join('/');
+//if exchanges returns an error we will keep on retrying until next scheduled fetch
+    this.tries = 0;
+    this.limit = 20;
 
-    
+    this.firstFetch = true;
+    this.batcher.on('new batch', this.relayTrades);
+
+
 }
+util.makeEventEmitter(Fetcher);
+
+Fetcher.prototype._fetch = function (since) {
+    if(++this.tries >= this.limit)
+        return;
+    this.exchangeTrader.getTrades(since, this.processTrades,false);
+}
+Fetcher.prototype.fetch = function () {
+    let since = false;
+    if(this.firstFetch){
+        since = this.firstSince;
+        this.firstFetch = false;
+
+    }
+    else
+        since = false;
+    this.tries = 0;
+    this.fetch(since);
+}
+Fetcher.prototype.processTrades = function (err,trades) {
+    if(err || a.isEmpty(trades))
+    {
+        if(err)
+        {
+
+        }
+        else
+        {
+
+        }
+        setTimeout(this.fetch, +moment.duration('sec',1));
+        return;
+    }
+    this.batcher.write(trades);
+}
+Fetcher.prototype.relayTrades = function(batch){
+    this..emit('batch trades',batch);
+}
+module.exports = Fetcher;
