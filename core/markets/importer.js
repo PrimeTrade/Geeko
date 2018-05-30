@@ -42,6 +42,25 @@ let Market = ()=>{
     this.fetcher = fetcher({
         to: to, from: from
     });
+    this.done = false;
+    this.fetcher.bus.on('trades', this.processTrades);
+    this.fetcher.bus.on('done', ()=>{
+        this.done=true;
+    }).bind(this)
 
+    this.tradeBatcher.on('new batch',this.candleManager.processTrades);
+    this.candleManager.on('candles', this.pushCandles);
 
+    Readable.call(this, {object: true});
+    this.get();
+}
+let Readable = require('stream').Readable;
+Market.prototype = Object.create(Readable.prototype, {constructor: {value: Market}});
+Market.prototype._read = _.noop;
+
+Market.prototype.pushCandles = (candles)=>{
+    _.each(candles, this.push);
+}
+Market.prototype.get = ()=>{
+    this.fetcher.fetch();
 }
