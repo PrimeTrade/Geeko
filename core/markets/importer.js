@@ -4,6 +4,7 @@ let dirs = util.dirs();
 let config = util.getConfig();
 let log = require(dirs.core + 'log');
 let moment = require('moment');
+let cp = require(dirs.core + 'cp');
 let daterange = config.importer.daterange;
 let from = moment.utc(daterange.from);
 if(daterange.to){
@@ -64,3 +65,19 @@ Market.prototype.pushCandles = (candles)=>{
 Market.prototype.get = ()=>{
     this.fetcher.fetch();
 }
+Market.prototype.processTrades=(trades)=>{
+    this.tradeBatcher.write(trades);
+
+    if(this.done){
+        log.info('Done Importing!');
+        this.emit('end');
+        return;
+    }
+    if(_.size(trades)){
+        let lastAtT = _.last(trades).date;
+        let lastAt = moment.unix(lastAtT).utc().format();
+        cp.update(lastAt);
+    }
+    setTimeout(this.get, 1000);
+}
+module.exports = Market;
