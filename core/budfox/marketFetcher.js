@@ -12,5 +12,20 @@ let Fetcher = function (config) {
     this.exchangeTrader =new DataProvider(config.watch);
     this.exchange = exchangeChecker.settings(config.watch);
     let requiredHistory = config.tradingAdvisor.candleSize * config.tradingAdvisor.historySize;
+//Trading advisor is enabled we might need a very specific fetch
+    if(config.tradingAdvisor.enabled && config.tradingAdvisor.firstFetchSince){
+        this.firstSince = config.tradingAdvisor.firstFetchSince;
+
+        if(this.exchange.providesHistory === 'date'){
+            this.firstSince = moment.unix(this.firstSince).utc();
+        }
+    }
+    this.batcher = new TradeBatcher(this.exchange.tid);
+
+    this.pair = [
+        config.watch.asset,
+        config.watch.currency
+    ].join('/');
+
     
 }
