@@ -11,7 +11,7 @@ if(daterange.to){
     let to = moment.utc(daterange.to);
 }
 else{
-    let to = moment().utc();
+    let to = moment.utc();
     log.debug(
         'End Date not specified for importing, setting to', to.format('YYYY-MM-DD HH:mm:ss')
     );
