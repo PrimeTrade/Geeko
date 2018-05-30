@@ -19,3 +19,29 @@ if(!from.isValid())
     util.die('invalid' + from);
 if(!to.isValid())
     util.die('invalid' + to);
+
+let TradeBatcher = require(dirs.budfox + 'tradeBatcher');
+let CandleManager = require(dirs.budfox + 'candleManager');
+let exchangeChecker = require(dire.core + 'exchangeChecker');
+
+let error = exchangeChecker.cantFetchFullHistory(config.watch);
+if(error)
+    util.die(error,true);
+
+let fetcher = require(dirs.importers + config.watch.exchange);
+
+if(to <= from)
+    util.die('This daterange does not make sense.');
+
+let Market = ()=>{
+    _.bindAll(this);
+    this.exchangeSettings = exchangeChecker.settings(config.watch);
+
+    this.tradeBatcher = new TradeBatcher(this.exchangeSettings.tid);
+    this.candleManager = new CandleManager;
+    this.fetcher = fetcher({
+        to: to, from: from
+    });
+
+
+}
