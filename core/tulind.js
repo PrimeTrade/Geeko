@@ -123,7 +123,7 @@ methods.apo ={
 		verifyParams('apo' , params);
 		
 		return (data, callback) => execute(callback, {
-			indicator: tulid.indicators.apo,
+			indicator: tulind.indicators.apo,
 			inputs: [data.close],
 			options: [params.optInfastPeriod , params.optInSlowPeriod],
 			results:['result'],
@@ -137,7 +137,7 @@ methods.aroon ={
 		verifyParams('aroon', params);
 		
 		return (data,callback) => execute(callback, {
-			indicator: tulid.indicator.aroon,
+			indicator: tulind.indicator.aroon,
 			input: [data.high, data.low],
 			options: [params.optInTimePeriod],
 			results: ['aroonDown','aroonwUp'],
@@ -151,7 +151,7 @@ methods.aroonosc ={
 		verifyParams('aroonosc',params);
 		
 		return (data,callback) => execute(callback, {
-			indicator: tulid.indicator.aroonosc,
+			indicator: tulind.indicator.aroonosc,
 			input: [data.high, data.low],
 			options: [params.optInTimePeriod],
 			results: ['result'],
@@ -165,7 +165,7 @@ methods.atr ={
 		verifyParams('atr',params);
 		
 		return (data,callback) => execute(callback, {
-			indicators: tulid.indicator.atr,
+			indicators: tulind.indicator.atr,
 			input: [data.high, data.low, data.close],
 			options: [params.optInPeriod],
 			results: ['result'],
@@ -180,7 +180,7 @@ methods.avgprice ={
 		verifyParams('avgprice',params);
 		
 		return(data,callback) => execute(callback,{
-			indicator: tulid.indicator.avgprice,
+			indicator: tulind.indicator.avgprice,
 			input: [data.open, data.high, data.close, data.low],
 			options: [],
 			results: ['result'],
@@ -194,7 +194,7 @@ methods.bbands ={
 		verifyParams('bbands',params);
 		
 		return (data,callback) => execute(callback,{
-			indicator: tulid.indicator.bbands,
+			indicator: tulind.indicator.bbands,
 			input: [data.close],
 			options: [params.optInTimePeriod, params.optInNbStdDevs],
 			results: ['bbandsLower', 'bbandsMiddle', 'bbandsUpper'],
@@ -209,7 +209,7 @@ methods.bop ={
 		
 		return (data,callback) => execute(callback,{
 		
-			indicator: tulid.indicator.bop,
+			indicator: tulind.indicator.bop,
 			input: [data.open, data.high, data.low, data.close],
 			options: [],
 			results: ['results'],
@@ -278,7 +278,7 @@ methods.di={
 	
 		verifyParam('di',param);
 		return(data,callback) => execute(callback,{
-			indicator: tulid.indicator.di,
+			indicator: tulind.indicator.di,
 			input: [data.high,data.low,data.close],
 			options: [param.optInTimePeriod],
 			results: ['diPlus','diMinus'],
@@ -292,7 +292,7 @@ methods.dm = {
 		verifyParam('dm',param);
 		return (data, callback) => execute(callback,{
 		
-			indicator: tulid.indicator.dm,
+			indicator: tulind.indicator.dm,
 			input: [data.high,data.low],
 			options: [param.optInTimePeriod],
 			results: ['dmPlus','dmLow'],
@@ -307,7 +307,7 @@ methods.dpo = {
 	create: (param)=> {
 		verifyParam('dpo',param);
 		return(data,callback) => execute(callback,{
-			indicator:tulid.indicator.dm,
+			indicator:tulind.indicator.dm,
 			input: [data.close],
 			options: [param.optInTimePeriod],
 			results: ['result'],
@@ -320,7 +320,7 @@ methods.dx = {
 	create:(param) => {
 		verifyParam('dx',param);
 		return(data,callback) => execute(callback,{
-			indicator: tulid.indicator.dx,
+			indicator: tulind.indicator.dx,
 			input: [data.high, data.close, data.low],
 			options: [param.optInTimePeriod],
 			results: ['result'],
@@ -335,7 +335,7 @@ methods.ema ={
 		verifyParam('ema',param);
 		return (data,callback)=> execute(callback,{
 			
-			indicator: tulid.indicator.ema,
+			indicator: tulind.indicator.ema,
 			input : [data.close],
 			options : [param.optInTimePeriod],
 			results: ['result'],
@@ -349,7 +349,7 @@ methods.emv ={
 	create:(param) => {
 		verifyParam('emv',param);
 		return (data,callback)=> execute(callback,{
-			indicator: tulid.indicator.emv,
+			indicator: tulind.indicator.emv,
 			input: [data.high, data.low, data.volume],
 			options :[],
 			reults: [],
@@ -402,7 +402,265 @@ methods.hma ={
 	}
 }
 
+methods.kama = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('kama', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.kama,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.kvo = {
+    requires: ['optInFastPeriod', 'optInSlowPeriod'],
+    create: (params) => {
+        verifyParams('kvo', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.kvo,
+            inputs: [data.high, data.low, data.close, data.volume],
+            options: [params.optInFastPeriod, params.optInSlowPeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.linreg = {
+
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+    
+        verifyParams('linreg', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.linreg,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+    
+}
+
+methods.linregintercept = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+    
+        verifyParams('linregintercept', params);
+
+        return (data, callback) => execute(callback, {
+        
+            indicator: tulind.indicators.linregintercept,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+            
+        });
+    }
+}
+
+methods.linregslope = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('linregslope', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.linregslope,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.macd = {
+    requires: ['optInFastPeriod', 'optInSlowPeriod', 'optInSignalPeriod'],
+    create: (params) => {
+    
+        verifyParams('macd', params);
+
+        return (data, callback) => execute(callback, {
+        
+            indicator: tulind.indicators.macd,
+            inputs: [data.close],
+            options: [params.optInFastPeriod, params.optInSlowPeriod, params.optInSignalPeriod],
+            results: ['macd', 'macdSignal', 'macdHistogram'],
+            
+        });
+    }
+}
+
+methods.marketfi = {
+    requires: [],
+    create: (params) => {
+        verifyParams('marketfi', params);
+
+        return (data, callback) => execute(callback, {
+        
+            indicator: tulind.indicators.marketfi,
+            inputs: [data.high, data.low, data.volume],
+            options: [],
+            results: ['result'],
+        });
+    }
+}
+
+methods.mass = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+    
+        verifyParams('mass', params);
+
+        return (data, callback) => execute(callback, {
+        
+            indicator: tulind.indicators.mass,
+            inputs: [data.high, data.low],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+            
+        });
+    }
+}
+
+methods.medprice = {
+
+    requires: [],
+    create: (params) => {
+        verifyParams('medprice', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.medprice,
+            inputs: [data.high, data.low],
+            options: [],
+            results: ['result'],
+        });
+    }
+}
+
+methods.mfi = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+    
+        verifyParams('mfi', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.mfi,
+            inputs: [data.high, data.low, data.close, data.volume],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.msw = {
+
+    requires: ['optInTimePeriod'],
+    
+    create: (params) => {
+    
+        verifyParams('msw', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.msw,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['mswSine', 'mswLead'],
+        });
+    }
+    
+}
+
+methods.natr = {
+
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+    
+        verifyParams('natr', params);
+
+        return (data, callback) => execute(callback, {
+        
+            indicator: tulind.indicators.natr,
+            inputs: [data.high, data.low, data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+            
+        });
+    }
+}
+
+methods.nvi = {
+    requires: [],
+    create: (params) => {
+        verifyParams('nvi', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.nvi,
+            inputs: [data.close, data.volume],
+            options: [],
+            results: ['result'],
+        });
+    }
+}
 
 
+methods.obv ={
+	requires: [],
+	create: (param) =>{
+	
+		verifyParam('obv',params);
+		return (data,callback)=> execute(callback,{
+			
+			indicator: tulind.indicator.obv,
+			input: [data.close,data.volume],
+			options: [],
+			results: ['results'],
+		});
+	}
+}
 
+methods.ppo = {
+    requires: ['optInFastPeriod', 'optInSlowPeriod'],
+    create: (params) => {
+        verifyParams('ppo', params);
 
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.ppo,
+            inputs: [data.close],
+            options: [params.optInFastPeriod, params.optInSlowPeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.psar = {
+    requires: ['optInAcceleration', 'optInMaximum'],
+    create: (params) => {
+        verifyParams('psar', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.psar,
+            inputs: [data.high, data.low],
+            options: [params.optInAcceleration, params.optInMaximum],
+            results: ['result'],
+        });
+    }
+}
+
+methods.pvi = {
+    requires: [],
+    create: (params) => {
+        verifyParams('pvi', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.pvi,
+            inputs: [data.close, data.volume],
+            options: [],
+            results: ['result'],
+        });
+    }
+}
