@@ -12,7 +12,7 @@ ipc.on('start', config=>{
     //persist config
     util.setConfig(config);
 
-    var let scan = require(dirs.tools + 'dateRangeScanner');
+    let scan = require(dirs.tools + 'dateRangeScanner');
     scan(
         (error, ranges, reader)=>{
             reader.close();
