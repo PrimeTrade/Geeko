@@ -79,6 +79,118 @@ Stitcher.prototype.prepareHistoricalData = function(done){
                 idealExchangeStartTimeTS
             );
         }
+        let minuteAgo = endTime.diff(idealExchangeStartTime, 'minutes');
+        let maxMinutesAgo = 4*60;
+        if(minuteAgo > maxMinutesAgo)
+        {
+            log.info('\t Preventing Geeko from requesting', minuteAgo, 'minutes of history');
+            idealExchangeStartTime = endTime.clone().subtract(maxMinutesAgo, 'minutes');
+            idealExchangeStartTimeTS = idealExchangeStartTime.unix();
 
-    })
+        }
+        log.debug('\t Fetching exchange data since', this.ago(idealExchangeStartTimeTS))
+        this.checkExchangeTrades(idealExchangeStartTime, function (err,exchangeData) {
+            log.debug('\t Available exchange data: ');
+            log.debug('\t\t from: ', this.ago(exchangeData.from));
+            log.debug('\t\t to: ',this.ago(exchangeData.to));
+
+            if(localData && exchangeData && exchangeData.from < localData.from){
+                log.debug('Exchange offer more data than locally available. Ignoring local data');
+                localData = false;
+            }
+            let stitchable = localData && exchangeData.from <= localData.to ;
+            if(stitchable){
+                log.debug('\t Stitching datasets');
+                if(idealStartTime.unix() >= localData.from){
+                    log.info(
+                        '\t Full history locally available'
+                    );
+
+                }
+                else {
+                    log.info(
+                        '\tPartial history locally available, but',
+                        Math.round((localData.from - idealStartTime.unix()) / 60),
+                        'minutes are missing.')
+                    log.info('\tSeeding the trading method with',
+                        'partial historical data (Geeko needs more time before',
+                        'it can give advice).'
+                    );
+                }
+                let from = localData.from;
+                let to = moment.unix(exchangeData.from).utc()
+                    .startOf('minute')
+                    .subtract(1, 'minute')
+                    .unix();
+
+                log.debug('\tSeeding with:');
+                log.debug('\t\tfrom:', this.ago(from));
+                log.debug('\t\tto:', this.ago(to));
+                return this.seedLocalData(from, to, done);
+
+            } else if(!stitchable) {
+                log.debug('\tUnable to stitch datasets.')
+
+                log.info(
+                    '\tNot seeding locally available data to the trading method.'
+                );
+
+                if(exchangeData.from < idealExchangeStartTimeTS) {
+                    log.info('\t Exchange returned enough data!');
+                } else if(localData) {
+                    log.info(
+                        '\tThe exchange does not return enough data.',
+                        Math.round((localData.from - idealStartTime.unix()) / 60),
+                        'minutes are still missing.'
+                    );
+                }
+            }
+
+            done();
+
+        }.bind(this));
+    }.bind(this));
 }
+
+Stitcher.prototype.checkExchangeTrades = function(since, next) {
+    let provider = config.watch.exchange.toLowerCase();
+    let DataProvider = require(util.dirs().gekko + 'exchanges/' + provider);
+
+    let exchangeConfig = config.watch;
+
+
+    if (_.isObject(config.trader) && config.trader.enabled) {
+        exchangeConfig = _.extend(config.watch, config.trader);
+    }
+
+    let watcher = new DataProvider(exchangeConfig);
+
+    watcher.getTrades(since, function(e, d) {
+        if(_.isEmpty(d))
+            return util.die(
+                `Geeko tried to retrieve data since ${since.format('YYYY-MM-DD HH:mm:ss')}, however
+        ${provider} did not return any trades.`
+            );
+
+        next(e, {
+            from: _.first(d).date,
+            to: _.last(d).date
+        })
+    });
+}
+
+Stitcher.prototype.seedLocalData = function(from, to, next) {
+    this.reader.get(from, to, 'full', function(err, rows) {
+        rows = _.map(rows, row => {
+            row.start = moment.unix(row.start);
+            return row;
+        });
+
+        this.batcher.write(rows);
+        this.reader.close();
+        next();
+
+    }.bind(this));
+}
+
+module.exports = Stitcher;
