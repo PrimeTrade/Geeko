@@ -145,9 +145,119 @@ methods.aroon ={
 	}
 }
 
+methods.aroonosc ={
+	requires: ['optInTimePeriod'],
+	create: (params) => {
+		verifyParams('aroonosc',params);
+		
+		return (data,callback) => execute(callback, {
+			indicator: tulid.indicator.aroonosc,
+			input: [data.high, data.low],
+			options: [params.optInTimePeriod],
+			results: ['result'],
+		});
+	}
+}
+
+methods.atr ={
+	requires: ['optInTimePeriod'],
+	create: (params)  =>{
+		verifyParams('atr',params);
+		
+		return (data,callback) => execute(callback, {
+			indicators: tulid.indicator.atr,
+			input: [data.high, data.low, data.close],
+			options: [params.optInPeriod],
+			results: ['result'],
+		});
+	}
+
+}
+
+methods.avgprice ={
+	requires: [],
+	create: (params) =>{
+		verifyParams('avgprice',params);
+		
+		return(data,callback) => execute(callback,{
+			indicator: tulid.indicator.avgprice,
+			input: [data.open, data.high, data.close, data.low],
+			options: [],
+			results: ['result'],
+		});
+	}	
+}
+
+methods.bbands ={
+	requires: ['optInTimePeriod', 'optInNbStdDevs'],
+	create: (params) =>{
+		verifyParams('bbands',params);
+		
+		return (data,callback) => execute(callback,{
+			indicator: tulid.indicator.bbands,
+			input: [data.close],
+			options: [params.optInTimePeriod, params.optInNbStdDevs],
+			results: ['bbandsLower', 'bbandsMiddle', 'bbandsUpper'],
+		});
+	}
+}
+
+methods.bop ={
+	requires: [],
+	create: (param) => {
+		verifyParams('bob',params);
+		
+		return (data,callback) => execute(callback,{
+		
+			indicator: tulid.indicator.bop,
+			input: [data.open, data.high, data.low, data.close],
+			options: [],
+			results: ['results'],
+		});
+	}
+}
+
+methods.cci ={
+	requires: ['optInTimePeriod'],
+	create: (param) => {
+		verifyParams('cci',params);
+		return(data,callback)=>execute(callback,{
+			indicator: tulind.indicator.cci,
+			input: [data.high, data.low, data.close],
+			options: [params.optInTimePeriod],
+			result: ['result'],
+		});
+	}
+}
+
+methods.cvi ={
+	requires: ['optInTimePeriod'],
+	create: (param) =>{
+		verifyParams('cvi',params);
+		
+		return(data,callback)=> execute(callback,{
+			indicator: tulind.indicator.cvi,
+			input: [data.high, data.low],
+			options: [params.optInTimePeriod],
+			result: ['result'],
+		});
+	}
+}
 
 
-
+methods.cmo ={
+	requires: ['optInTimePeriod'],
+	create: (param) =>{
+		verifyParam('cmo',params);
+		
+		return(data,callback) => execute(callback,{
+			indicator: tulind.indicator.cmo,
+			input: [data.close],
+			options: [params.optInTimePeriod],
+			result: ['result'],
+		});
+	}
+}
 
 
 
