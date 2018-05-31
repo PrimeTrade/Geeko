@@ -664,3 +664,196 @@ methods.pvi = {
         });
     }
 }
+
+methods.qstick= {
+	requires: ['optInTimePeriod'],
+	create: (params) => {
+		verifyParam('qstick',params);
+		
+		return (data,callback) => execute(callback,{
+		
+			indicator: tulind.indictors.qstick,
+			inputs: [data.open, data.close],
+			options: [param.optInTimePeriod],
+			results: ['result'],
+		});
+	}
+}
+
+methods.roc= {
+	requires: ['optInTimePeriod'],
+	create: (params) => {
+	
+		verifyParam('roc',params);
+		
+		return (data,callback) => execute(callback,{
+			indicator: tulind.indicators.roc,
+			input: [data.close],
+			options: [param.optInTimePeriod],
+			results: ['result'],
+		});
+	}
+}
+
+methods.rocr = {
+	requires: ['optInTimePeriod'],
+	create: (params) => {
+		verifyParam('rocr',params);
+		return (data,callback)=> execute(callback,{
+			indicator: tulind.indicator.rocr,
+			input: [data.close],
+			operations: [param.optInTimePeriod],
+			results: ['result'],
+		});
+	
+	}
+}
+
+methods.rsi ={
+
+	requires: ['optInTimePeriod'],
+	create:(parms)=> {
+		verifyParam('rsi',params);
+		return (data,callback)=> execute(callback,{
+			indicator: tulind.indicator.rsi,
+			input: [data.close],
+			options: [param.optInTimePeriod],
+			results: ['results'],
+		});
+	}
+}
+
+methods.sma = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('sma', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.sma,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.stoch = {
+    requires: ['optInFastKPeriod', 'optInSlowKPeriod', 'optInSlowDPeriod'],
+    create: (params) => {
+        verifyParams('stoch', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.stoch,
+            inputs: [data.high, data.low, data.close],
+            options: [params.optInFastKPeriod, params.optInSlowKPeriod, params.optInSlowDPeriod],
+            results: ['stochK', 'stochD'],
+        });
+    }
+}
+
+methods.sum = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('sum', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.sum,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.tema = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('tema', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.tema,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.tr = {
+    requires: [],
+    create: (params) => {
+        verifyParams('tr', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.tr,
+            inputs: [data.high, data.low, data.close],
+            options: [],
+            results: ['result'],
+        });
+    }
+}
+
+methods.trima = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('trima', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.trima,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.trix = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('trix', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.trix,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.tsf = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('tsf', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.tsf,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.typprice = {
+    requires: [],
+    create: (params) => {
+        verifyParams('typprice', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.typprice,
+            inputs: [data.high, data.low, data.close],
+            options: [],
+            results: ['result'],
+        });
+    }
+}
+
+
+
+
+
+
+
+
+
