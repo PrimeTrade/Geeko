@@ -43,3 +43,112 @@ let verifyParams = (methodName, params) => {
             throw tulindError + paramName + ' It should be a number';
     });
 }
+
+
+let methods = {};
+
+methods.ad = {
+    requires: [],
+    create: (params) => {
+        verifyParams('ad', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.ad,
+            inputs: [data.high, data.low, data.close, data.volume],
+            options: [],
+            results: ['result'],
+        });
+    }
+}
+
+methods.adosc = {
+    requires: ['optInFastPeriod', 'optInSlowPeriod'],
+    create: (params) => {
+        verifyParams('adosc', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.adosc,
+            inputs: [data.high, data.low, data.close, data.volume],
+            options: [params.optInFastPeriod, params.optInSlowPeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.adx = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('adx', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.adx,
+            inputs: [data.high, data.low, data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.adxr = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('adxr', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.adxr,
+            inputs: [data.high, data.low, data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.ao = {
+    requires: [],
+    create: (params) => {
+        verifyParams('ao', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.ao,
+            inputs: [data.high, data.low],
+            options: [],
+            results: ['result'],
+        });
+    }
+}
+
+methods.apo ={
+	requires: ['optInfastPeriod', 'optInSlowPeriod'],
+	create: (params) => {
+		verifyParams('apo' , params);
+		
+		return (data, callback) => execute(callback, {
+			indicator: tulid.indicators.apo,
+			inputs: [data.close],
+			options: [params.optInfastPeriod , params.optInSlowPeriod],
+			results:['result'],
+		});
+	}
+}
+
+methods.aroon ={
+	requires: ['optInTimePeriod'],
+	create: (params) =>{
+		verifyParams('aroon', params);
+		
+		return (data,callback) => execute(callback, {
+			indicator: tulid.indicator.aroon,
+			input: [data.high, data.low],
+			options: [params.optInTimePeriod],
+			results: ['aroonDown','aroonwUp'],
+		});
+	}
+}
+
+
+
+
+
+
+
+
