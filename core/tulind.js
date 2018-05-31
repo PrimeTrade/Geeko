@@ -849,7 +849,117 @@ methods.typprice = {
     }
 }
 
+methods.ultosc = {
+    requires: ['optInTimePeriod1', 'optInTimePeriod2', 'optInTimePeriod3'],
+    create: (params) => {
+        verifyParams('ultosc', params);
 
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.ultosc,
+            inputs: [data.high, data.low, data.close],
+            options: [params.optInTimePeriod1, params.optInTimePeriod2, params.optInTimePeriod3],
+            results: ['result'],
+        });
+    }
+}
+
+methods.vhf = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('vhf', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.vhf,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.vidya = {
+    requires: ['optInFastPeriod', 'optInSlowPeriod', 'optInAlpha'],
+    create: (params) => {
+        verifyParams('vidya', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.vidya,
+            inputs: [data.close],
+            options: [params.optInFastPeriod, params.optInSlowPeriod, params.optInAlpha],
+            results: ['result'],
+        });
+    }
+}
+
+methods.volatility = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('volatility', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.volatility,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.vosc = {
+    requires: ['optInFastPeriod', 'optInSlowPeriod'],
+    create: (params) => {
+        verifyParams('vosc', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.vosc,
+            inputs: [data.volume],
+            options: [params.optInFastPeriod, params.optInSlowPeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.vwma = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('vwma', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.vwma,
+            inputs: [data.close, data.volume],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.wad = {
+    requires: [],
+    create: (params) => {
+        verifyParams('wad', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.wad,
+            inputs: [data.high, data.low, data.close],
+            options: [],
+            results: ['result'],
+        });
+    }
+}
+
+methods.wcprice = {
+    requires: [],
+    create: (params) => {
+        verifyParams('wcprice', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.wcprice,
+            inputs: [data.high, data.low, data.close],
+            options: [],
+            results: ['result'],
+        });
+    }
+}
 
 
 
