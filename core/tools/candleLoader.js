@@ -10,7 +10,7 @@ const dirs = util.dirs();
 const log = require(dirs.core + '/log');
 
 const adapter = config[config.adapter];
-const Reader = require(dirs.geeko + adapter.path + '/reader');
+const Reader = require(dirs.Geeko + adapter.path + '/reader');
 const daterange = config.daterange;
 
 const candleBatcher = require(dirs.core + 'candleBatcher');
@@ -54,5 +54,50 @@ module.exports = function (candleSize,next) {
 }
 
 
+const getBatch = () => {
+    reader.get(
+        iterator.from.unix(),
+        iterator.to.unix(),
+        'full',
+        handleCandles
+    )
+
+
 }
+const shiftIterator = () => {
+    iterator = {
+        from: iterator.from.clone().add(batchSize,'min'),
+        to: iterator.from.clone().add(batchSize * 2 ,'min').subtract(1,'sec')
+    }
+}
+
+const handleCandles = () => {
+    if(err)
+    {
+        console.error(err);
+        util.die('Error encountered');
+
+    }
+
+    if(_.size[data]  && _.last(data).start >= toUnix)
+        DONE = true;
+
+    batcher.write(data);
+
+    if(DONE)
+    {
+        reader.close();
+
+        setTimeOut(doneFn,100);
+    }
+    else {
+        shiftIterator();
+        getBatch();
+    }
+}
+const handleBatchedCandles = candle => {
+    result.push(candle);
+}
+
+
 
