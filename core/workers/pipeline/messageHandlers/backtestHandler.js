@@ -11,7 +11,7 @@ module.exports =done=>{
             if(msg.type === 'candle')
                 candles.push(message.candle);
             else if(msg.type === 'trade')
-                trades.push(message.roundtrip);
+                trades.push(message.trade);
             else if(msg.type === 'roundtrip')
                 roundtrips.push(message.roundtrip);
             else if(msg.type === 'report')
