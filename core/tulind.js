@@ -225,7 +225,7 @@ methods.cci ={
 			indicator: tulind.indicator.cci,
 			input: [data.high, data.low, data.close],
 			options: [params.optInTimePeriod],
-			result: ['result'],
+			results: ['result'],
 		});
 	}
 }
@@ -239,7 +239,7 @@ methods.cvi ={
 			indicator: tulind.indicator.cvi,
 			input: [data.high, data.low],
 			options: [params.optInTimePeriod],
-			result: ['result'],
+			results: ['result'],
 		});
 	}
 }
@@ -254,7 +254,7 @@ methods.cmo ={
 			indicator: tulind.indicator.cmo,
 			input: [data.close],
 			options: [params.optInTimePeriod],
-			result: ['result'],
+			results: ['result'],
 		});
 	}
 }
@@ -267,7 +267,7 @@ methods.dema ={
 			indicator: tulind.indicator.dema,
 			input: [data.close],
 			options: [param.optInTimePeriod],
-			result: ['result'],
+			results: ['result'],
 		});
 	}
 }
@@ -281,7 +281,7 @@ methods.di={
 			indicator: tulid.indicator.di,
 			input: [data.high,data.low,data.close],
 			options: [param.optInTimePeriod],
-			result: ['diPlus','diMinus'],
+			results: ['diPlus','diMinus'],
 		});
 	}
 }
@@ -295,7 +295,7 @@ methods.dm = {
 			indicator: tulid.indicator.dm,
 			input: [data.high,data.low],
 			options: [param.optInTimePeriod],
-			result: ['dmPlus','dmLow'],
+			results: ['dmPlus','dmLow'],
 		});
 	}
 
@@ -310,7 +310,7 @@ methods.dpo = {
 			indicator:tulid.indicator.dm,
 			input: [data.close],
 			options: [param.optInTimePeriod],
-			result: ['result'],
+			results: ['result'],
 		});
 	}
 }
@@ -323,7 +323,7 @@ methods.dx = {
 			indicator: tulid.indicator.dx,
 			input: [data.high, data.close, data.low],
 			options: [param.optInTimePeriod],
-			result: ['result'],
+			results: ['result'],
 		});
 	}
 }
@@ -332,20 +332,75 @@ methods.ema ={
 
 	requires: ['optInTimePeriod'],
 	create:(param) => {
-		verifyParam('ema',pram);
+		verifyParam('ema',param);
 		return (data,callback)=> execute(callback,{
 			
 			indicator: tulid.indicator.ema,
 			input : [data.close],
 			options : [param.optInTimePeriod],
-			result: ['result'],
+			results: ['result'],
+		});
+	}
+}
+
+methods.emv ={
+	
+	requires:[],
+	create:(param) => {
+		verifyParam('emv',param);
+		return (data,callback)=> execute(callback,{
+			indicator: tulid.indicator.emv,
+			input: [data.high, data.low, data.volume],
+			options :[],
+			reults: [],
+		
 		});
 	}
 }
 
 
+methods.fisher = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('fisher', params);
 
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.fisher,
+            inputs: [data.high, data.low],
+            options: [params.optInTimePeriod],
+            results: ['fisher', 'fisherPeriod'],
+        });
+    }
+}
 
+methods.fosc = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('fosc', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.fosc,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.hma ={
+
+	requires: ['optInTimePeriod'],
+	create: (param) => {
+		
+		verifyParams('hma',params);
+		return (data, callback) => execute(callback, {
+			indicator: tulind.indicators.hma,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+	}
+}
 
 
 
