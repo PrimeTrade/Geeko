@@ -10,7 +10,7 @@ const dirs = util.dirs();
 const log = require(dirs.core + '/log');
 
 const adapter = config[config.adapter];
-const Reader = require(dirs.Geeko + adapter.path + '/reader');
+const Reader = require(dirs.gekko + adapter.path + '/reader');
 const daterange = config.daterange;
 
 const candleBatcher = require(dirs.core + 'candleBatcher');
