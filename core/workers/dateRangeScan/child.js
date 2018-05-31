@@ -1,4 +1,4 @@
-let util = require(__dirname + '../../util');
+let util = require('../../util');
 let dirs = util.dirs();
 let ipc = require('relieve').IPCEE(process);
 

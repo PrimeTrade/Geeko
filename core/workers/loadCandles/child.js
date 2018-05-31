@@ -1,5 +1,5 @@
 let start = (config, candleSize, daterange)=>{
-    let util = require('/../../util');
+    let util = require('../../util');
 
     //force correct geeko env
     util.setGekkoEnv('child-process');
