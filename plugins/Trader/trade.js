@@ -35,15 +35,15 @@ class Trade {
     }
 
     deactivate(callback) {
-        this.isDeactivating = true
+        this.isDeactivating = true;
 
         log.debug("attempting to stop Trade class from", this.action + "ING", this.asset + "/" + this.currency)
 
         let done = () => {
-            this.isActive = false
+            this.isActive = false;
             log.debug("successfully stopped Trade class from", this.action + "ING", this.asset + "/" + this.currency)
             if (_.isFunction(callback))
-                callback()
+                callback();
         }
 
         if (_.size(this.orderIds)) {
@@ -52,5 +52,36 @@ class Trade {
             done()
         }
     }
+    doTrade(retry){
+        if(!this.isActive || this.isDeactivating)
+            return false;
+        if(!retry && _.size(this.orderIds))
+            return this.cancelLastOrder(() => this.doTrade());
+        let act = () => {
+            let amount,price;
+            if(this.action === 'BUY'){
+                amount = this.portfolio.getBalance(this.currency) / this.portfolio.ticker.ask;
+                if(amount>0){
+                    price = this.portfolio.ticker.bid;
+                    this.buy(amount,price);
+
+                }
+            }
+            else if (this.action === 'SELL'){
+                amount = this.portfolio.getBalance(this.asset) -this.keepAsset;
+                if(amount > 0){
+                    price = this.portfolio.ticker.ask;
+                    this.sell(amount,price);
+                }
+            }
+        }
+        async.series([
+            this.portfolio.setTicker.bind(this.portfolio),
+            this.portfolio.setPortfolio.bind(this.portfolio),
+            this.portfolio.setFee.bind(this.portfolio),
+
+        ],act);
+    }
+}
 
 
