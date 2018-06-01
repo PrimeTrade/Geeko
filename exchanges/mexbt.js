@@ -102,6 +102,60 @@ trader.prototype.checkOrder = function(order, callback) {
   this.mexbt.accountOrders(lodash.bind(check, this));
 }
 
+trader.prototype.cancelOrder = function(order, callback) {
+  let cancel = function(err, result) {
+    if(err || !result)
+      log.error('unable to cancel order', order, '(', err, result, ')');
+  };
+
+  this.mexbt.cancelOrder({id: order}, lodash.bind(cancel, this));
+}
+
+trader.prototype.getTrades = function(since, callback, descending) {
+  let args = lodash.toArray(arguments);
+  let process = function(err, result) {
+    if(err)
+      return this.retry(this.getTrades, args);
+    trades = lodash.map(result.trades, function (t) {
+      return {tid: t.tid, price: t.px, date: t.unixtime, amount: t.qty};
+    });
+    if (descending) {
+      trades = trades.reverse()
+    }
+    callback(null, trades);
+  }.bind(this);
+
+  let endDate = moment().unix();
+
+  // FIXME: there is a bug in meXBT tradesByDate function, that it doesnt return all data
+  // when trying to fetch all.
+  // So if no since, we just fetch all via trades and giving a high count
+  if (since) {
+    this.mexbt.tradesByDate({startDate: since.unix(), endDate: endDate}, process);
+  } else {
+    // improvised
+    this.mexbt.trades({count: 1000}, process);
+  }
+}
+
+trader.getCapabilities = function () {
+  return {
+    name: 'meXBT',
+    slug: 'mexbt',
+    currencies: ['MXN'],
+    assets: ['BTC'],
+    markets: [
+      {
+        pair: ['MXN', 'BTC'], minimalOrder: { amount: 0.01, unit: 'asset' }
+      }
+    ],
+    requires: ['key', 'secret', 'username'],
+    providesHistory: 'date',
+    tid: 'tid'
+  };
+}
+
+module.exports = trader;
 
 
 
