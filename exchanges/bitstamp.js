@@ -147,6 +147,89 @@ trader.prototype.getOrder = (id, callback)=>{
     get.bind(this);
     this.bitstamp.user_transactions(this.market, {}, get);
 };
+trader.prototype.checkOrder = (order, callback)=>{
+    let check = (err, result)=>{
+        let stillThere = _.find(result, (o)=>{
+            return o.id === order
+        });
+        callback(err, !stillThere);
+    };
+    check.bind(this);
+    this.bitstamp.open_orders(this.market, check);
+};
+trader.prototype.cancelOrder = (order, callback)=>{
+    let args = _.toArray(arguments);
+    let cancel = (err, result)=>{
+        if(err || !result){
+            log.error('unable to cancel order', order, '(', err, result, ')');
+            return this.retry(this.cancelOrder, args);
+        }
+        callback();
+    };
+    cancel.bind(this);
+    this.bitstamp.cancel_order(order, cancel);
+};
+trader.prototype.getTraders = (since, callback, descending)=>{
+    let args = _.toArray(arguments);
+    let process = (err, trades)=>{
+        if(err)
+            return this.retry(this.getTrades, args);
+        let result = _.map(trades, t=>{
+            return{
+                date: t.date,
+                tid: +t.tid,
+                price: +t.price,
+                amount: +t.amount
+            }
+        });
+        callback(null, result.reserve());
+    };
+    process.bind(this);
+    this.bitstamp.transactions(this.market, process);
+}
+trader.getCapabilities = ()=>{
+    return{
+        name: 'Bitstamp',
+        slug: 'bitstamp',
+        currencies: ['USD', 'EUR', 'BTC'],
+        assets: ['BTC', 'BCH', 'EUR', 'LTC', 'ETH', 'XRP'],
+        maxTradesAge: 60,
+        maxHistoryFetch: null,
+        markets: [
+            { pair: ['USD', 'EUR'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 2 },
+
+            { pair: ['USD', 'BTC'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 2 },
+            { pair: ['EUR', 'BTC'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 2 },
+
+            { pair: ['USD', 'BCH'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 2 },
+            { pair: ['EUR', 'BCH'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 2 },
+            { pair: ['BTC', 'BCH'], minimalOrder: { amount: 0.001, unit: 'currency'}, precision: 8  },
+
+            { pair: ['USD', 'XRP'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 5 },
+            { pair: ['EUR', 'XRP'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 5 },
+            { pair: ['BTC', 'XRP'], minimalOrder: { amount: 0.001, unit: 'currency'}, precision: 8  },
+
+            { pair: ['USD', 'LTC'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 2 },
+            { pair: ['EUR', 'LTC'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 2 },
+            { pair: ['BTC', 'LTC'], minimalOrder: { amount: 0.001, unit: 'currency'}, precision: 8  },
+
+            { pair: ['USD', 'ETH'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 2 },
+            { pair: ['EUR', 'ETH'], minimalOrder: { amount: 5, unit: 'currency' }, precision: 2 },
+            { pair: ['BTC', 'ETH'], minimalOrder: { amount: 0.001, unit: 'currency'}, precision: 8  },
+        ],
+        requires: ['key', 'secret', 'username'],
+        fetchTimespan: 60,
+        tid: 'tid',
+        tradable: true
+    };
+};
+
+module.exports = trader;
+
+
+
+
+
 
 
 
