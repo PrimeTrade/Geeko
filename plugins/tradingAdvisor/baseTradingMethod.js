@@ -71,9 +71,10 @@ vwp: [],
 trades: []
 };
 
-_.each(['init', 'check']),function (fn) {
-    if(!this[fn]){
-    util.die('No' +fn + 'function in this trading method found')},this);
+_.each(['init', 'check'],function (fn) {
+    if(!this[fn])
+    util.die('No' +fn + 'function in this trading method found')
+    }, this);
 if(!this.update)
     this.update = function () {
 
@@ -103,7 +104,7 @@ util.makeEventEmitter(Base);
 
 Base.prototype.tick = function (candle) {
     if(
-        this.asyncTick && this.hasSyncIndicators && this.age !== this.processedTicks;
+        this.asyncTick && this.hasSyncIndicators && this.age !== this.processedTicks
 ){
         return this.deferredTicks.push(candle);
     }
@@ -137,9 +138,9 @@ Base.prototype.tick = function (candle) {
             i.update(candle);
 
     },this);
-    if(!this.asyncTick){
+    if(!this.asyncTick) {
         this.propogateTick(candle);
-        else
+    } else
         {
             let next = _.after(
                 _.size(this.talibIndicators) + _.size(this.tulipIndicators),
@@ -175,6 +176,115 @@ Base.prototype.tick = function (candle) {
         }
         this.propogateCustomCandle(candle);
     }
-    
-}
-}
+
+    if(ENV !== 'child process') {
+        Base.prototype.propogateCustomCandle = _.noop;
+
+    }
+    else{
+        Base.prototype.propogateCustomCandle = function (candle) {
+            process.send({
+                type: 'candle',
+                candle: candle
+            });
+        }
+    }
+    Base.prototype.propogateTick = function(candle){
+        this.candle = candle;
+        this.update(candle);
+        let isAllowedToCheck = this.requiredHistory <= this.age;
+        let isPremature;
+
+        if(mode == 'realTime'){
+            let startTimeMinusCandleSize = startTime.clone();
+            startTimeMinusCandleSize.subtract(this.tradingAdvisor.candleSize, "minutes");
+            isPremature = candle.start < startTimeMinusCandleSize;
+
+        }
+        else{
+            isPremature = false;
+        }
+        if(isAllowedToCheck && !isPremature){
+            this.log(candle);
+            this.check(candle);
+        }
+        this.processedTicks++;
+        if(this.asyncTick && this.hasSyncIndicators && this.deferredTicks.length){
+            return this.tick(this.deferredTicks.shift())
+        }
+        let done = this.age === this.processedTicks;
+        if(done && this.finishCb)
+            this.finishCb();
+    }
+    Base.prototype.processedTrade = function (trade) {
+        this.onTrade(Trade);
+    }
+    Base.prototype.addTalibIndicator = function(name, type, parameters){
+        if(!talib)
+            util.die("Not enabled talib");
+        if(!_.contains(allowedTalibIndicators, type))
+            util.die('I do not know the talib indicator' + type);
+
+        if(this.setup)
+            util.die('Can only add talib indicator in init method');
+        let basectx = this;
+
+        this.talibIndicators[name] = {
+            run: talib[type].create(parameters),
+            result: NaN
+        }
+    }
+    Base.prototype.addTulipIndicator = function(name, type, parameters){
+        if(!tulind)
+            util.die('Not enabled tulind');
+        if(!_.contains(allowedTulipIndicators, type))
+            util.die('I do not know the tulip indicator' + type);
+
+        if(this.setup)
+            util.die('Can only add tulip indicator in init method');
+
+        let basectx = this;
+        this.tulipIndicators[name] = {
+            run: tulind[type].create(parameters),
+            result: NaN
+        }
+    }
+    Base.prototype.addIndicator = function (name, type, parameters) {
+        if(!_.contains(allowedIndicators,type))
+            util.die('I do not know the indicator' + type);
+        if(this.setup)
+            util.die('Can only add indicator in init method');
+        return this.indicators[name] = new Indicators[type](parameters);
+    }
+
+    Base.prototype.advice = function (newPosition,_candle) {
+        if(!newPosition)
+            return;
+        if(newPosition === this._prevAdvice)
+            return;
+        if(_candle)
+            var candle = _candle;
+        else
+            var candle = this.candle;
+        this._prevAdvice = newPosition;
+        this.emit('advice',{
+            recommendation: newPosition,
+            portfolio: 1,
+            candle
+
+        });
+
+    }
+    Base.prototype.finish = function (done) {
+        if(!this.asyncTick){
+            this.end();
+            return done();
+        }
+        if(this.age === this.processedTicks){
+            this.end();
+            return done();
+        }
+        this.finishCb = done;
+    }
+
+module.exports = Base;
