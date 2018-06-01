@@ -9,11 +9,11 @@ module.exports =done=>{
         message: msg=>{
 
             if(msg.type === 'candle')
-                candles.push(message.candle);
+                candles.push(msg.candle);
             else if(msg.type === 'trade')
-                trades.push(message.trade);
+                trades.push(msg.trade);
             else if(msg.type === 'roundtrip')
-                roundtrips.push(message.roundtrip);
+                roundtrips.push(msg.roundtrip);
             else if(msg.type === 'report')
                 report = msg.report;
             else if(msg.log)
