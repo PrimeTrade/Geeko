@@ -961,9 +961,63 @@ methods.wcprice = {
     }
 }
 
+methods.wilders = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('wilders', params);
 
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.wilders,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
 
+methods.willr = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('willr', params);
 
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.willr,
+            inputs: [data.high, data.low, data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.wma = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('wma', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.wma,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+methods.zlema = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('zlema', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.zlema,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
+module.exports = methods;
 
 
 
