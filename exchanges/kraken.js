@@ -141,3 +141,127 @@ trader.prototype.getFee = function(callback) {
     const makerFee = 0.16;
     callback(undefined, makerFee / 100);
 };
+
+trader.prototype.getTicker = (callback)=> {
+    let setTicker = (err, data)=> {
+        if (err) return callback(err);
+
+        let result = data.result[this.pair];
+        let ticker = {
+            ask: result.a[0],
+            bid: result.b[0]
+        };
+        callback(undefined, ticker);
+    };
+
+    let reqData = {pair: this.pair}
+
+    let handler = (cb) => this.kraken.api('Ticker', reqData, this.handleResponse('getTicker', cb));
+    util.retryCustom(retryForever, _.bind(handler, this), _.bind(setTicker, this));
+};
+
+trader.prototype.roundAmount = function(amount) {
+    // Prevent "You incorrectly entered one of fields."
+    // because of more than 8 decimals.
+    // Specific precision by pair https://blog.kraken.com/post/1278/announcement-reducing-price-precision-round-2
+
+    let precision = 100000000;
+    let parent = this;
+    let market = trader.getCapabilities().markets.find(function(market){ return market.pair[0] === parent.currency && market.pair[1] === parent.asset });
+
+    if(Number.isInteger(market.precision))
+        precision = Math.pow(10, market.precision);
+
+    amount *= precision;
+    amount = Math.floor(amount);
+    amount /= precision;
+    return amount;
+};
+
+trader.prototype.addOrder = (tradeType, amount, price, callback)=> {
+    price = this.roundAmount(price); // only round price, not amount
+
+    log.debug('[kraken.js] (addOrder)', tradeType.toUpperCase(), amount, this.asset, '@', price, this.currency);
+
+    let setOrder = (err, data)=> {
+        if(err) return callback(err);
+
+        let txid = data.result.txid[0];
+        log.debug('[kraken.js] (addOrder) added order with txid:', txid);
+
+        callback(undefined, txid);
+    };
+
+    let reqData = {
+        pair: this.pair,
+        type: tradeType.toLowerCase(),
+        ordertype: 'limit',
+        price: price,
+        volume: amount
+    };
+
+    let handler = (cb) => this.kraken.api('AddOrder', reqData, this.handleResponse('addOrder', cb));
+    util.retryCustom(retryCritical, _.bind(handler, this), _.bind(setOrder, this));
+};
+
+
+trader.prototype.getOrder = function(order, callback) {
+    let getOrder = (err, data)=> {
+        if(err) return callback(err);
+
+        let price = parseFloat( data.result[ order ].price );
+        let amount = parseFloat( data.result[ order ].vol_exec );
+        let date = moment.unix( data.result[ order ].closetm );
+
+        callback(undefined, {price, amount, date});
+    };
+
+    let reqData = {txid: order};
+    let handler = (cb) => this.kraken.api('QueryOrders', reqData, this.handleResponse('getOrder', cb));
+    util.retryCustom(retryCritical, _.bind(handler, this), _.bind(getOrder, this));
+};
+
+trader.prototype.buy = (amount, price, callback)=> {
+    this.addOrder('buy', amount, price, callback);
+};
+
+trader.prototype.sell = (amount, price, callback)=> {
+    this.addOrder('sell', amount, price, callback);
+};
+
+trader.prototype.checkOrder = (order, callback)=> {
+    let check = function(err, data) {
+        if(err) return callback(err);
+
+        let result = data.result[order];
+        let stillThere = result.status === 'open' || result.status === 'pending';
+        callback(undefined, !stillThere);
+    };
+
+    let reqData = {txid: order};
+    let handler = (cb) => this.kraken.api('QueryOrders', reqData, this.handleResponse('checkOrder', cb));
+    util.retryCustom(retryCritical, _.bind(handler, this), _.bind(check, this));
+};
+
+trader.prototype.cancelOrder = (order, callback)=> {
+    let reqData = {txid: order};
+    let handler = (cb) => this.kraken.api('CancelOrder', reqData, this.handleResponse('cancelOrder', cb));
+    util.retryCustom(retryForever, _.bind(handler, this), callback);
+};
+
+trader.getCapabilities = function () {
+    return {
+        name: 'Kraken',
+        slug: 'kraken',
+        currencies: marketData.currencies,
+        assets: marketData.assets,
+        markets: marketData.markets,
+        requires: ['key', 'secret'],
+        providesHistory: 'date',
+        providesFullHistory: true,
+        tid: 'date',
+        tradable: true
+    };
+}
+
+module.exports = trader;
