@@ -70,3 +70,56 @@ PerformanceAnalyzer.prototype.processTrade = function(trade) {
 
     this.logRoundtripPart(trade);
 }
+
+PerformanceAnalyzer.prototype.logRoundtripPart = function (trade) {
+    if(!this.roundTrip.entry && trade.action === 'sell') {
+        return;
+    }
+
+    if(trade.action === 'buy') {
+        if (this.roundTrip.exit) {
+            this.roundTrip.id++;
+            this.roundTrip.exit = false
+        }
+
+        this.roundTrip.entry = {
+            date: trade.date,
+            price: trade.price,
+            total: trade.portfolio.currency + (trade.portfolio.asset * trade.price),
+        }
+    } else if(trade.action === 'sell') {
+        this.roundTrip.exit = {
+            date: trade.date,
+            price: trade.price,
+            total: trade.portfolio.currency + (trade.portfolio.asset * trade.price),
+        }
+
+        this.handleRoundtrip();
+    }
+}
+
+PerformanceAnalyzer.prototype.round = function(amount) {
+    return amount.toFixed(8);
+}
+
+PerformanceAnalyzer.prototype.handleRoundtrip = function() {
+    var roundtrip = {
+        id: this.roundTrip.id,
+
+        entryAt: this.roundTrip.entry.date,
+        entryPrice: this.roundTrip.entry.price,
+        entryBalance: this.roundTrip.entry.total,
+
+        exitAt: this.roundTrip.exit.date,
+        exitPrice: this.roundTrip.exit.price,
+        exitBalance: this.roundTrip.exit.total,
+
+        duration: this.roundTrip.exit.date.diff(this.roundTrip.entry.date)
+    }
+
+    roundtrip.pnl = roundtrip.exitBalance - roundtrip.entryBalance;
+    roundtrip.profit = (100 * roundtrip.exitBalance / roundtrip.entryBalance) - 100;
+
+    this.roundTrips[this.roundTrip.id] = roundtrip;
+    this.handler.handleRoundtrip(roundtrip);
+}
