@@ -185,3 +185,117 @@ trader.prototype.sell = (amount, price, callback)=> {
         set
     );
 };
+trader.prototype.checkOrder = (order, callback)=> {
+    let args = _.toArray(arguments);
+    if (order === null) {
+        return callback('no order_id', false);
+    }
+    let check = (err, data)=> {
+        if(err){
+            return this.retry(this.checkOrder, arguments);
+        }
+        let status = data.return.order.status;
+        if (status === 'filled') {
+            return callback(err, true);
+        } else if (status === 'open') {
+            return callback(err, false);
+        }
+        callback(err, false);
+    };
+    check.bind(this);
+
+    this.bitcoincoid.getOrderDetails(this.pair, order, check);
+};
+
+trader.prototype.getOrder = (order, callback)=> {
+    let args = _.toArray(arguments);
+    if (order === null) {
+        return callback('no order_id', false);
+    }
+    let get = (data, err)=> {
+        if(err)
+            return callback(err);
+
+        let price = 0;
+        let amount = 0;
+        let date = moment(0);
+
+        if(!data.success)
+            return callback(null, {price, amount, date});
+
+        let result = data.return.order;
+        let orderAmount = result.order+'_'+this.asset;
+        price = result.Price;
+        amount = result.orderAmount;
+
+        if(result.status === 'open') {
+            date = moment(result.submit_time);
+        } else {
+            date = moment(result.finish_time);
+        }
+        callback(err, {price, amount, date});
+    };
+    get.bind(this);
+
+    this.bitcoincoid.getOrderDetails(this.pair, order, get);
+};
+
+trader.prototype.cancelOrder = (order, callback)=> {
+    let args = _.toArray(arguments);
+    let cancel = function(err, data) {
+        if(err) {
+            return log.error('unable to cancel order: ', order, '(', err, '), retrying...');
+        }
+        this.retry(this.cancelOrder, args);
+        callback();
+    };
+    this.bitcoincoid.cancelOrder(this.pair, order, this.type, cancel);
+};
+
+trader.getCapabilities = ()=> {
+    return {
+        name: 'Bitcoin.co.id',
+        slug: 'bitcoin-co-id',
+        currencies: ['IDR', 'BTC'],
+        assets: [
+            "BTC", "BCH", "BTG", "ETH", "ETC", "LTC", "NXT", "WAVES", "STR", "XRP", "XZC", "BTS", "DRK", "DOGE", "NEM", "XZR", "DASH", "XLM", "XEM"
+        ],
+        markets: [
+
+            // IDR <-> XXXX
+
+            { pair: ['IDR', 'BTC'], minimalOrder: { amount: 0.0001, unit: 'asset' } },
+            { pair: ['IDR', 'BCH'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['IDR', 'BTG'], minimalOrder: { amount: 0.01, unit: 'asset' } },
+            { pair: ['IDR', 'ETH'], minimalOrder: { amount: 0.01, unit: 'asset' } },
+            { pair: ['IDR', 'ETC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['IDR', 'LTC'], minimalOrder: { amount: 0.01, unit: 'asset' } },
+            { pair: ['IDR', 'NXT'], minimalOrder: { amount: 5, unit: 'asset' } },
+            { pair: ['IDR', 'WAVES'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['IDR', 'STR'], minimalOrder: { amount: 20, unit: 'asset' } }, // Listed as XLM
+            { pair: ['IDR', 'XRP'], minimalOrder: { amount: 10, unit: 'asset' } },
+            { pair: ['IDR', 'XZC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+
+
+            // BTC <-> XXXX
+
+            { pair: ['BTC', 'BTS'], minimalOrder: { amount: 0.01, unit: 'asset' } },
+            { pair: ['BTC', 'DRK'], minimalOrder: { amount: 0.01, unit: 'asset' } }, // Listed as DASH
+            { pair: ['BTC', 'DOGE'], minimalOrder: { amount: 1, unit: 'asset' } },
+            { pair: ['BTC', 'ETH'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['BTC', 'LTC'], minimalOrder: { amount: 0.01, unit: 'asset' } },
+            { pair: ['BTC', 'NXT'], minimalOrder: { amount: 0.01, unit: 'asset' } },
+            { pair: ['BTC', 'STR'], minimalOrder: { amount: 0.01, unit: 'asset' } }, // Listed as XLM
+            { pair: ['BTC', 'NEM'], minimalOrder: { amount: 1, unit: 'asset' } }, // Listed as XEM
+            { pair: ['BTC', 'XRP'], minimalOrder: { amount: 0.01, unit: 'asset' } }
+
+        ],
+        requires: ['key', 'secret'],
+        tid: 'tid',
+        providesHistory: true,
+        providesFullHistory: false,
+        tradable: true
+    };
+};
+
+module.exports = trader;
