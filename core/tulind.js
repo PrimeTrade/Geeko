@@ -1000,7 +1000,7 @@ methods.wma = {
             options: [params.optInTimePeriod],
             results: ['result'],
         });
-    }
+    }what
 }
 
 methods.zlema = {
