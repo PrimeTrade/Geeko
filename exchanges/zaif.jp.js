@@ -79,3 +79,63 @@ trader.prototype.buy = (amount, price, callback)=> {
     amount /= 100000000;
     this.zaif.trade('bid', price, amount).then(_.bind(set, this));
 };
+trader.prototype.sell = (amount, price, callback)=> {
+    let set = (result)=> {
+        if(!result)
+            return log.error('unable to sell:', result);
+
+        callback(null, result.order_id);
+    };
+
+    this.zaif.trade('ask', price, amount).then(_.bind(set, this));
+};
+
+trader.prototype.checkOrder = (order, callback)=> {
+    let check = (result)=> {
+        let stillThere = (order in result);
+        callback(null, !stillThere);
+    };
+
+    this.zaif.activeOrders().then(_.bind(check, this));
+};
+
+trader.prototype.cancelOrder = (order, callback)=> {
+    let cancel = (result)=> {
+        if(!result)
+            log.error('unable to cancel order', order, '(', result, ')');
+    };
+
+    this.zaif.cancelOrder(order).then(_.bind(cancel, this));
+};
+
+trader.prototype.getTrades = (since, callback, descending)=> {
+    let args = _.toArray(arguments);
+    let process = (result)=> {
+        if(!result)
+            return this.retry(this.getTrades, args);
+
+        callback(null, result.reverse());
+    };
+
+    this.api.trades('btc_jpy').then(_.bind(process, this));
+};
+
+trader.getCapabilities = function () {
+    return {
+        name: 'Zaif.jp',
+        slug: 'zaif.jp',
+        currencies: ['JPY'],
+        assets: ['BTC'],
+        markets: [
+            {
+                pair: ['JPY', 'BTC'], minimalOrder: { amount: 1, unit: 'currency' }
+            }
+        ],
+        requires: ['key', 'secret', 'username'],
+        providesHistory: false,
+        fetchTimespan: 60,
+        tid: 'tid'
+    };
+};
+
+module.exports = trader;
