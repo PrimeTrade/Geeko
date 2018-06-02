@@ -89,3 +89,99 @@ let trader = (config)=>{
         set.bind(this);
         this.bitcoincoid.getAccountBalances(set);
     };
+trader.prototype.getTrades = (since, callback, descending)=> {
+    let args = _.toArray(arguments);
+
+    if(since)
+        since = 150; // ???
+
+    let process = (err, data)=> {
+        if(err)
+            return this.retry(this.getTrades, args);
+
+        let trades = _.map(data, (trade)=> {
+            return {
+                price: +trade.price,
+                amount: +trade.amount,
+                tid: +trade.tid,
+                date: trade.date
+            };
+        });
+        callback(null, data.reverse());
+    };
+    process.bind(this);
+
+    this.bitcoincoid.getTrades(this.pair, process);
+}
+
+// bitcoin.co.id: Maker 0% - Taker 0.3%
+// Note: trading fee: 0.3% for IDR pairs and 0% for BTC pairs
+trader.prototype.getFee = (callback)=> {
+    let fee = 0;
+    if (this.currency.toUpperCase() === 'IDR')
+    {
+        fee = 0.003;
+    }
+    else if (this.currency.toUpperCase() === 'BTC')
+    {
+        fee = 0.000;
+    }
+
+    callback(false, fee);
+};
+
+trader.prototype.buy = (amount, price, callback)=> {
+    this.type = 'buy';
+
+    // decrease purchase amount by 1% to avoid trying to buy more than balance
+    amount -= amount / 100;
+    amount = this.roundAmount(amount);
+
+    // decrease purchase price by 1% less than asking price
+    // price -= price / 100;
+    amount *= price;
+
+    let set = (err, data)=> {
+        if(!err && _.isEmpty(data))
+            err = 'no data';
+        else if(!err && !_.isEmpty(data.errorMessage))
+            err = data.errorMessage;
+        if(err)
+            return log.error('unable to buy', err);
+        callback(null, data.return.order_id);
+    };
+    set.bind(this);
+    this.bitcoincoid.createOrders(
+        this.pair + '',
+        this.type,
+        price,
+        amount,
+        set
+    );
+};
+
+trader.prototype.sell = (amount, price, callback)=> {
+    this.type = 'sell';
+
+    // increase selling price by 1% more than bidding price
+    // price += price / 100;
+
+    amount = this.roundAmount(amount);
+    let set = (err, data)=> {
+        if(!err && _.isEmpty(data))
+            err = 'no data';
+        else if(!err && !_.isEmpty(data.errorMessage))
+            err = data.errorMessage;
+        if(err)
+            return log.error('unable to sell', err);
+        callback(null, data.return.order_id);
+    };
+    set.bind(this);
+    this.bitcoincoid.createOrders(
+        this.pair + '',
+        this.type,
+        price,
+        amount,
+        set
+    );
+};
