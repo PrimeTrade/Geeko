@@ -122,4 +122,51 @@ PerformanceAnalyzer.prototype.handleRoundtrip = function() {
 
     this.roundTrips[this.roundTrip.id] = roundtrip;
     this.handler.handleRoundtrip(roundtrip);
+    this.sharpe = stats.sharpe(
+        this.roundTrips.map(r => r.profit),
+        perfConfig.riskFreeReturn
+    );
 }
+PerformanceAnalyzer.prototype.calculateReportStatistics = function () {
+    let balance = this.current.currency + this.price*this.current.asset;
+    let profit = balance - this.start.balance;
+    let timespan = moment.duration(
+        this.dates.end.diff(this.dates.start)
+    );
+    let relativeProfit = balance / this.start.balance * 100 - 100;
+
+    let report = {
+        currency : this.currency,
+        asset: this.asset,
+        startTime: this.dates.start.utc().format('YYYY-MM-DD HH:mm:ss'),
+        endTime: this.dates.end.utc().format('YYYY-MM-DD HH:mm:ss'),
+        timespan: timespan.humanize(),
+        market: this.endPrice * 100 / this.startPrice - 100,
+
+        balance: balance,
+        profit: profit,
+        relativeProfit: relativeProfit,
+
+        yearlyProfit: this.round(profit / timespan.asYears()),
+        relativeYearlyProfit: this.round(relativeProfit / timespan.asYears()),
+
+        startPrice: this.startPrice,
+        endPrice: this.endPrice,
+        trades: this.trades,
+        startBalance: this.start.balance,
+        sharpe: this.sharpe
+    }
+    report.alpha = report.profit - report.market;
+
+    return report;
+}
+
+PerformanceAnalyzer.prototype.finalize = function(done) {
+    const report = this.calculateReportStatistics();
+    this.handler.finalize(report);
+    done();
+}
+
+
+module.exports = PerformanceAnalyzer;
+
