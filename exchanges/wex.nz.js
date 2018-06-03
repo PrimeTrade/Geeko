@@ -143,3 +143,153 @@ trader.prototype.getFee = (callback)=> {
     // at this moment it is always 0.2%
     callback(false, 0.002);
 };
+trader.prototype.checkOrder = (order, callback)=> {
+    let check = (err, result)=> {
+        // wex returns an error when you have no open trades
+        // right now we assume on every error that the order
+        // was filled.
+        // open trades or that there is something else.
+        if(err)
+            callback(false, true);
+        else
+            callback(err, !result[order]);
+    };
+    check.bind(this);
+
+    this.wex.orderList({}, check);
+};
+
+trader.prototype.getOrder = (orderId, callback)=> {
+    console.log('getOrder', orderId);
+    let args = _.toArray(arguments);
+    let check = (err, result)=> {
+        if(err) {
+            log.error('error on getOrder', err);
+            return this.retry(this.getOrder, args);
+        }
+        let order = null;
+        _.each(result.return, o => {
+            if(o.order_id === +orderId)
+                order = o;
+        });
+
+        if(!order)
+            return log.error('wex.nz did not provide the order');
+
+        let price = parseFloat(order.rate);
+        let amount = parseFloat(order.amount);
+        let date = moment.unix(order.timestamp);
+
+        callback(undefined, {price, amount, date});
+    };
+    check.bind(this);
+
+    this.wex.tradeHistory({pair: this.pair}, check);
+};
+
+
+trader.prototype.cancelOrder = (order, callback)=> {
+    this.wex.cancelOrder(order, (err, result) => {
+        callback();
+    });
+};
+
+trader.prototype.getTrades = (since, callback, descending)=> {
+    let args = _.toArray(arguments);
+    let process = (err, trades)=> {
+        if(err)
+            return this.retry(this.getTrades, args);
+
+        if(descending)
+            callback(false, trades);
+        else
+            callback(false, trades.reverse());
+    };
+    process.bind(this);
+
+    if(since) {
+        this.wexHistorocial.makePublicApiRequest(
+            'trades',
+            this.pair + '?limit=2000',
+            this.processAPIv3Trades(process)
+        )
+    } else
+        this.wex.trades(this.pair, process);
+};
+
+trader.prototype.processAPIv3Trades = (cb)=> {
+    return function(err, data) {
+        let trades = _.map(data[this.pair], (t)=> {
+            return {
+                price: t.price,
+                amount: t.amount,
+                tid: t.tid,
+                date: t.timestamp
+            }
+        });
+        cb(err, trades);
+    }.bind(this)
+};
+
+trader.getCapabilities = ()=> {
+    return {
+        name: 'wex.nz',
+        slug: 'wex.nz',
+        currencies: ['USD', 'RUR', 'EUR', 'BTC', 'LTC', 'ETH', 'NMC', 'NMC', 'NVC', 'PPC', 'DSH', 'BCH'],
+        assets: [
+            'BTC', 'LTC', 'NMC', 'NVC', 'USD', 'EUR', 'PPC', 'DSH', 'ETH',
+            'USDET', 'RURET', 'EURET', 'BTCET', 'LTCET', 'ETHET', 'NMCET', 'NVCET', 'PPCET', 'DSHET', 'BCHET' // Token
+        ],
+        markets: [
+            { pair: ['USD', 'BTC'], minimalOrder: { amount: 0.01, unit: 'asset' } },
+            { pair: ['RUR', 'BTC'], minimalOrder: { amount: 0.01, unit: 'asset' } },
+            { pair: ['EUR', 'BTC'], minimalOrder: { amount: 0.01, unit: 'asset' } },
+            { pair: ['BTC', 'LTC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['USD', 'LTC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['RUR', 'LTC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['EUR', 'LTC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['BTC', 'NMC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['USD', 'NMC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['BTC', 'NVC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['USD', 'NVC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['RUR', 'USD'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['USD', 'EUR'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['RUR', 'EUR'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['BTC', 'PPC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['USD', 'PPC'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['BTC', 'DSH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['USD', 'DSH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['RUR', 'DSH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['EUR', 'DSH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['LTC', 'DSH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['ETH', 'DSH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['BTC', 'ETH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['USD', 'ETH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['EUR', 'ETH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['LTC', 'ETH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['RUR', 'ETH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['USD', 'BCH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['BTC', 'BCH'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+
+            // Token pairs
+            { pair: ['USD', 'USDET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['RUR', 'RURET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['EUR', 'EURET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['BTC', 'BTCET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['LTC', 'LTCET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['ETH', 'ETHET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['NMC', 'NMCET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['NVC', 'NVCET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['PPC', 'PPCET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['DSH', 'DSHET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+            { pair: ['BCH', 'BCHET'], minimalOrder: { amount: 0.1, unit: 'asset' } },
+
+        ],
+        requires: ['key', 'secret'],
+        providesHistory: false,
+        tid: 'tid',
+        tradable: true
+    };
+};
+
+module.exports = trader;
