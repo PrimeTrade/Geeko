@@ -154,3 +154,110 @@ trader.prototype.checkOrder = function(order, callback) {
 
 	this.poloniex.myOpenOrders(this.currency, this.asset, check);
 }
+
+trader.prototype.getOrder = function(order, callback) {
+
+	let get = function(err, result) {
+
+		if(err)
+			return callback(err);
+
+		let price = 0;
+		let amount = 0;
+		let date = moment(0);
+
+		if(result.error === 'Order not found, or you are not the person who placed it.')
+			return callback(null, {price, amount, date});
+
+		lodash.each(result, trade => {
+
+			date = moment(trade.date);
+			price = ((price * amount) + (+trade.rate * trade.amount)) / (+trade.amount + amount);
+			amount += +trade.amount;
+
+		});
+
+		callback(err, {price, amount, date});
+	}.bind(this);
+
+	this.poloniex.returnOrderTrades(order, get);
+}
+
+trader.prototype.cancelOrder = function(order, callback) {
+	let args = lodash.toArray(arguments);
+	let cancel = function(err, result) {
+
+		// check if order is gone already
+		if(result.error === 'Invalid order number, or you are not the person who placed the order.')
+			return callback(true);
+
+		if(err || !result.success) {
+			log.error('unable to cancel order', order, '(', err, result, '), retrying');
+			return this.retry(this.cancelOrder, args);
+		}
+
+		callback();
+	}.bind(this);
+
+	this.poloniex.cancelOrder(this.currency, this.asset, order, cancel);
+}
+
+trader.prototype.getTrades = function(since, callback, descending) {
+
+	let firstFetch = !!since;
+
+	let args = lodash.toArray(arguments);
+	let process = function(err, result) {
+		if(err) {
+			return this.retry(this.getTrades, args);
+		}
+
+		// Edge case, see here:
+		// @link https://github.com/askmike/gekko/issues/479
+		if(firstFetch && lodash.size(result) === 50000)
+			util.die(
+				[
+					'Poloniex did not provide enough data. Read this:',
+					'https://github.com/askmike/gekko/issues/479'
+				].join('\n\n')
+			);
+
+		result = lodash.map(result, function(trade) {
+			return {
+				tid: trade.tradeID,
+				amount: +trade.amount,
+				date: moment.utc(trade.date).unix(),
+				price: +trade.rate
+			};
+		});
+
+		callback(null, result.reverse());
+	};
+
+	let params = {
+		currencyPair: joinCurrencies(this.currency, this.asset)
+	}
+
+	if(since)
+		params.start = since.unix();
+
+	this.poloniex.lodashpublic('returnTradeHistory', params, lodash.bind(process, this));
+}
+
+trader.getCapabilities = function () {
+	return {
+		name: 'Poloniex',
+		slug: 'poloniex',
+		currencies: marketData.currencies,
+		assets: marketData.assets,
+		markets: marketData.markets,
+		currencyMinimums: {BTC: 0.0001, ETH: 0.0001, XMR: 0.0001, USDT: 1.0},
+		requires: ['key', 'secret'],
+		tid: 'tid',
+		providesHistory: 'date',
+		providesFullHistory: true,
+		tradable: true
+	};
+}
+
+module.exports = trader;
