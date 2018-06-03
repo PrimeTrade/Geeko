@@ -146,3 +146,110 @@ trader.prototype.sell = (amount, price, callback)=> {
         set
     );
 };
+
+trader.prototype.checkOrder = (order, callback)=> {
+    let args = _.toArray(arguments);
+
+    if (order == null) {
+        return callback(null, true);
+    }
+
+    let check = (err, data)=> {
+        if(!err && _.isEmpty(data.orders))
+            err = 'no data';
+        else if(!err && !_.isEmpty(data.errorMessage))
+            err = data.errorMessage;
+        if(err) {
+            return log.error('unable to check order: ', order, '(', err, '), retrying...');
+        }
+        this.retry(this.checkOrder, args);
+        let placed = !_.isEmpty(data.orders);
+        callback(err, !placed);
+    };
+    check.bind(this);
+
+    this.btcmakets.getOpenOrders(this.asset, this.currency, 10, null, check);
+};
+
+trader.prototype.getOrder = (order, callback)=> {
+    let args = _.toArray(arguments);
+    let get = (err, data)=> {
+
+        if(!err && _.isEmpty(data.orders))
+            err = 'no data';
+        else if(!err && !_.isEmpty(data.errorMessage))
+            err = data.errorMessage;
+        if(err) {
+            return log.error('unable to get order detail: ', order, '(', err, '), retrying...');
+        }
+        this.retry(this.getOrder, args);
+        let price = parseFloat(data.orders[0].price);
+        let amount = parseFloat(data.orders[0].volumn);
+        let date = moment.unix(data.orders[0].creationDate);
+
+        callback(undefined, {price, amount, date});
+    };
+    get.bind(this);
+    this.btcmakets.getOrderDetail([order], callback);
+};
+
+trader.prototype.cancelOrder = (order, callback)=> {
+    let args = _.toArray(arguments);
+    let get = (err, data)=> {
+
+        if(!err && _.isEmpty(data))
+            err = 'no data';
+        else if(!err && !_.isEmpty(data.errorMessage))
+            err = data.errorMessage;
+        if(err) {
+            return log.error('unable to cancel order: ', order, '(', err, '), retrying...');
+        }
+        this.retry(this.cancelOrder, args);
+        callback();
+    };
+    this.btcmakets.cancelOrders([order], callback);
+};
+
+trader.prototype.getTrades = (since, callback, descending)=> {
+    let args = _.toArray(arguments);
+    let process = (err, result)=> {
+        if(err)
+            return this.retry(this.getTrades, args);
+
+        callback(null, result.reverse());
+    };
+    process.bind(this);
+
+    // supports `since` based on trade ID, Gekko can't work this atm..
+    this.btcmakets.getTrades(this.asset, this.currency, process);
+};
+
+trader.getCapabilities = ()=> {
+    return {
+        name: 'BTC Markets',
+        slug: 'btc-markets',
+        currencies: ['AUD', 'BTC'],
+        assets: [
+            'BTC', 'LTC', 'ETH', 'ETC', 'BCH', 'XRP'
+        ],
+        markets: [
+            { pair: ['AUD', 'BTC'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['AUD', 'LTC'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['AUD', 'ETH'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['AUD', 'ETC'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['AUD', 'BCH'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['AUD', 'XRP'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['BTC', 'LTC'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['BTC', 'ETH'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['BTC', 'ETC'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['BTC', 'BCH'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['BTC', 'XRP'], minimalOrder: { amount: 0.001, unit: 'asset' } }
+        ],
+        requires: ['key', 'secret'],
+        tid: 'tid',
+        providesHistory: 'scan',
+        providesFullHistory: false,
+        tradable: true
+    };
+};
+module.exports = trader;
