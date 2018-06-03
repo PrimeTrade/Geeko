@@ -63,7 +63,7 @@ let SCANNINGlodashSTRIDE = 24;
 let ITERATINGlodashSTRIDE = 2;
 let stride = ITERATINGlodashSTRIDE;
 
-let fetcher = new fetcher(config.watch);
+fetcher = new fetcher(config.watch);
 fetcher.bitfinex = new Bitfinex(null, null, { version: 2, transform: true }).rest;
 
 let retryCritical = {retries: 10,factor: 1.2,minTimeout: 70 * 1000,maxTimeout: 120 * 1000,};
