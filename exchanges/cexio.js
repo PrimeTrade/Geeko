@@ -122,3 +122,87 @@ trader.prototype.getTicker = (callback)=> {
     };
     this.cexio.ticker(_.bind(set, this));
 };
+trader.prototype.getPortfolio = (callback)=> {
+    let args = _.toArray(arguments);
+    let calculate = (err, data)=> {
+        if(err)
+            return this.retry(this.getPortfolio, args, err);
+
+        let currency = parseFloat(data[this.currency].available)
+        if(parseFloat(data[this.currency].orders)){
+            currency -= parseFloat(data[this.currency].orders)
+        }
+        let assets = parseFloat(data[this.asset].available);
+        if( parseFloat(data[this.asset].orders)){
+            assets -= parseFloat(data[this.asset].orders);
+        }
+
+        let portfolio = [];
+        portfolio.push({name: this.currency, amount: currency});
+        portfolio.push({name: this.asset, amount: assets});
+        callback(err, portfolio);
+    };
+    this.cexio.balance(calculate.bind(this));
+};
+
+trader.prototype.getFee = (callback)=> {
+    // cexio does currently don't take a fee on trades
+    callback(false, 0.002);
+};
+
+trader.prototype.checkOrder = (order, callback)=> {
+    let check = (err, result)=> {
+
+        if(err)
+            return callback(false, true);
+        if(result.error)
+            return callback(false, true);
+
+        let exists = false;
+        _.each(result, function(entry) {
+            if(entry.id === order) {
+                exists = true;
+                return;
+            }
+        });
+        callback(err, !exists);
+    };
+
+    this.cexio.open_orders(_.bind(check, this));
+};
+
+trader.prototype.cancelOrder = (order)=> {
+    let check= (err, result)=> {
+        if(err)
+            log.error('cancel order failed:', err);
+        if(typeof(result) !== 'undefined' && result.error)
+            log.error('cancel order failed:', result.error);
+    };
+    this.cexio.cancel_order(order, check);
+};
+
+trader.getCapabilities = ()=> {
+    return {
+        name: 'CEX.io',
+        slug: 'cexio',
+        currencies: ['BTC', 'USD', 'EUR', 'RUB'],
+        assets: ['GHS', 'BTC', 'ETH', 'LTC'],
+        markets: [
+            { pair: ['BTC', 'GHS'], minimalOrder: { amount: 0.000001, unit: 'currency' } },
+            { pair: ['BTC', 'LTC'], minimalOrder: { amount: 0.000001, unit: 'currency' } },
+            { pair: ['EUR', 'LTC'], minimalOrder: { amount: 0.000001, unit: 'currency' } },
+            { pair: ['USD', 'LTC'], minimalOrder: { amount: 0.000001, unit: 'currency' } },
+            { pair: ['RUB', 'BTC'], minimalOrder: { amount: 0.000001, unit: 'currency' } },
+            { pair: ['USD', 'BTC'], minimalOrder: { amount: 0.000001, unit: 'currency' } },
+            { pair: ['EUR', 'BTC'], minimalOrder: { amount: 0.000001, unit: 'currency' } },
+            { pair: ['BTC', 'ETH'], minimalOrder: { amount: 0.000001, unit: 'currency' } },
+            { pair: ['USD', 'ETH'], minimalOrder: { amount: 0.000001, unit: 'currency' } },
+            { pair: ['EUR', 'ETH'], minimalOrder: { amount: 0.000001, unit: 'currency' } }
+        ],
+        requires: ['key', 'secret', 'username'],
+        providesHistory: false,
+        tid: 'tid'
+    };
+};
+
+module.exports = trader;
