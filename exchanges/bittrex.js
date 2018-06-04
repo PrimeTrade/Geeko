@@ -1,8 +1,8 @@
-let _ = require('lodash');
-let moment = require('moment');
-let Bittrex = require('node.bittrex.api');
-let util = require('../core/util');
-let log = require('../core/log');
+const _ = require('lodash');
+const moment = require('moment');
+const Bittrex = require('node.bittrex.api');
+const util = require('../core/util');
+const log = require('../core/log');
 
 let joinCurrencies = (currencyA, currencyB)=>{
     return currencyA + '-' + currencyB;

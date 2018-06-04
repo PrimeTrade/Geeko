@@ -1,8 +1,8 @@
-let BTCChina = require('btc-china-fork');
-let util = require('../core/util.js');
-let _ = require('lodash');
-let moment = require('moment');
-let log = require('../core/log');
+const BTCChina = require('btc-china-fork');
+const util = require('../core/util.js');
+const _ = require('lodash');
+const moment = require('moment');
+const log = require('../core/log');
 
 let trader = (config)=> {
     _.bindAll(this);
@@ -68,3 +68,66 @@ trader.prototype.getTrades = (since, callback, descending)=> {
 
     this.btcc.getHistoryData(process, {limit: since});
 };
+
+trader.prototype.getPortfolio = (callback)=>{
+    let args = _.toArray(arguments);
+    let set = (err,data)=>{
+        if(err)
+            return this.retry(this.getPortfolio, args);
+        let portfolio = [];
+        _.each(data.result.balance, (obj)=>{
+            portfolio.push({name: obj.currency, amount: parseFloat(obj.amount)});
+        });
+        callback(err, portfolio);
+    };
+    set.bind(this);
+    this.btcc.getAccountInfo(set, 'ALL');
+};
+
+trader.prototype.getFee = (callback)=>{
+    let args = _.toArray(arguments);
+    let set = (err, data)=>{
+        if(err)
+            this.retry(this.getFee, args);
+        callback(false, data.result.profile.trade_fee/100);
+    };
+    set.bind(this);
+    this.btcc.getAccountInfo(set, 'ALL');
+};
+
+trader.prototype.buy = (amount, price, callback)=>{
+    amount = Math.floor(amount*10000)/10000;
+    let set = (err, result)=>{
+        if(err)
+            return log.error('Unable to buy:',err, result);
+        callback(null,result.result);
+    };
+    set.bind(this);
+    this.btcc.createOrder2(set, 'buy', price, amount, this.pair);
+};
+
+trader.prototype.sell = (amount, price, callback)=>{
+    amount = Math.round(amount * 10000)/10000;
+    let set = (err,result)=>{
+        if(err)
+            return log.error('Unable to sell:', err, result);
+        callback(null, result.result);
+    };
+    set.bind(this);
+    this.btcc.createOrder2(set, 'sell', price, amount, this.pair);
+};
+
+trader.prototype.checkOrder = (order, callback)=>{
+    let args = _.toArray(arguments);
+    let check = (err, result)=>{
+        if(err)
+            this.retry(this.checkOrder, args);
+        let done = result.result.order.status === 'closed';
+        callback(err, done);
+    };
+    this.btcc.getOrder(check, order, this.pair, true);
+};
+
+trader.prototype.cancelOrder = (order, callback)=>{
+    let cancel
+}
