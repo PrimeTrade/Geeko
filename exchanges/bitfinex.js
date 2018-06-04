@@ -137,3 +137,57 @@ trader.prototype.getTrades = (since, callback, decending)=>{
     let handler = (cb)=> this.bitfinex.trades(path, this.handleResponse('getTrades', cb));
     util.retryCustom(foreverRetry, _.bind(handler, this), _.bind(process, this));
 };
+
+trader.prototype.checkOrder = (order_id, callback)=> {
+    let process = (err, data) => {
+        if (err) return callback(err);
+
+        callback(undefined, !data.is_live);
+    };
+
+    let handler = (cb) => this.bitfinex.order_status(order_id, this.handleResponse('checkOrder', cb));
+    util.retryCustom(criticalRetry, _.bind(handler, this), _.bind(process, this));
+};
+
+trader.prototype.getOrder = (order_id, callback)=> {
+    let process = (err, data) => {
+        if (err) return callback(err);
+
+        let price = parseFloat(data.avg_execution_price);
+        let amount = parseFloat(data.executed_amount);
+        let date = moment.unix(data.timestamp);
+
+        callback(undefined, {price, amount, date});
+    };
+
+    let handler = (cb) => this.bitfinex.order_status(order_id, this.handleResponse('getOrder', cb));
+    util.retryCustom(criticalRetry, _.bind(handler, this), _.bind(process, this));
+};
+
+trader.prototype.cancelOrder = (order_id, callback)=> {
+    let process = (err, data) => {
+        if (err) return callback(err);
+
+        return callback(undefined);
+    };
+
+    let handler = (cb) => this.bitfinex.cancel_order(order_id, this.handleResponse('cancelOrder', cb));
+    util.retryCustom(foreverRetry, _.bind(handler, this), _.bind(process, this));
+};
+
+trader.getCapabilities = ()=> {
+    return {
+        name: 'Bitfinex',
+        slug: 'bitfinex',
+        currencies: marketData.currencies,
+        assets: marketData.assets,
+        markets: marketData.markets,
+        requires: ['key', 'secret'],
+        tid: 'tid',
+        providesFullHistory: true,
+        providesHistory: 'date',
+        tradable: true,
+        forceReorderDelay: true
+    };
+};
+module.exports = trader;
