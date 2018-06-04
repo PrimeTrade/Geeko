@@ -44,3 +44,60 @@ Reader.prototype.mostRecentWindow = function mostRecentWindow(from,to,next) {
         });
     })
 }
+Reader.prototype.get = function get(from,to,what,next) {
+    this.collection.find({
+        pair: this.pair,
+        start: { $gte: from, $lte: to}}).sort({start: 1},(err,docs) => {
+            if(err){
+                return util.die('At `get` DB error');
+            }
+            return next(null,docs);
+    });
+}
+Reader.prototype.count = function fCount(from,to,next) {
+    this.collection.count({
+        pair: this.pair,
+        start: {$gte: from,
+        $lte: to}
+    },(err,count) => {
+        if(err){
+            return util.die('At `count` DB error ');
+        }
+        return next(null,count);
+    })
+}
+Reader.prototype.countTotal = function countTotal(next) {
+    this.collection.find({pair: this.pair}, (err,count)=>{
+        if(err){
+            return util.die('At `countTotal` DB error');
+        }
+        return next(null,count);
+    })
+}
+Reader.prototype.getBoundry = function getBoundary(next) {
+    this.collection.find({
+        pair: this.pair}
+        ,{start:1}).sort({start:1}).limit(1,(err,docs) => {
+            if(err){
+                return util.die('At `getBoundary` DB error');
+            }
+            let start = _.first(docs).start;
+        this.collection.find(
+            { pair: this.pair },
+            { start: 1 }).sort({ start: -1 }).limit(1, (err2, docs2) => {
+            if (err2) {
+                return util.die('DB error at `getBoundry`');
+            }
+            var end = _.first(docs2).start;
+            return next(null, { first: start, last: end });
+        });
+        return null;
+    });
+}
+Reader.prototype.tableExists = function (name,next) {
+    return next(null,true);
+}
+Reader.prototype.close = function () {
+    this.db = null;
+}
+module.exports = Reader;
