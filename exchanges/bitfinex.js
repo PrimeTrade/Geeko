@@ -83,3 +83,57 @@ trader.prototype.getPortfolio = (callback)=>{
     let handler = (cb)=> this.bitfinex.wallet_balances(this.handleResponse('getPortfolio', cb));
     util.retryCustom(foreverRetry, _.bind(handler, this), _.bind(process, this));
 };
+
+trader.prototype.getTicker = (callback)=>{
+    let process = (err, data)=>{
+        if(err) return callback(err);
+        callback(undefined, {bid: +data.bid, ask: +data.ask})
+    };
+
+    let handler = (cb)=> this.bitfinex.ticker(this.pair, this.handleResponse('getTicker', cb));
+    util.retryCustom(foreverRetry, _.bind(handler, this), _.bind(process, this));
+};
+
+//maker fee is 0.1%
+trader.prototype.getFee = (callback)=>{
+    let makerFee = 0.1;
+    callback(undefined, makerFee / 100);
+};
+
+trader.prototype.submit_order = (type, amount, price, callback)=>{
+    let process = (err, data)=>{
+        if(err) return callback(err);
+        callback(err, data.order_id);
+    };
+    amount = Math.floor(amount*100000000)/100000000;
+    let handler = (cb)=> this.bitfinex.new_order(this.pair, amount +'', price +'', this.name.toLowerCase(), type, 'exchange limit', this.handleResponse('submitOrder', cb));
+    util.retryCustom(retryCritical, _.bind(handler, this), _.bind(process, this));
+};
+
+trader.prototype.buy = (amount, price, callback)=>{
+    this.submit_order('buy', amount, price, callback);
+};
+
+trader.prototype.sell = (amount, price, callback)=>{
+    this.submit_order('sell', amount, price, callback);
+};
+
+trader.prototype.getTrades = (since, callback, decending)=>{
+    let process = (err, data)=>{
+        if(err) return callback(err);
+        let trades = _.map(data, (trade)=>{
+            return{
+                tid: trade.id,
+                date: trade.timestamp,
+                price: +trade.price,
+                amount: +trade.amount
+            }
+        });
+        callback(undefined, decending ? trades : trades.reverse());
+    };
+    let path = this.pair;
+    if(since)
+        path += '?limit_trades=2000';
+    let handler = (cb)=> this.bitfinex.trades(path, this.handleResponse('getTrades', cb));
+    util.retryCustom(foreverRetry, _.bind(handler, this), _.bind(process, this));
+};
