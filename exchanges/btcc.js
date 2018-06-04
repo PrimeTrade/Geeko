@@ -129,5 +129,29 @@ trader.prototype.checkOrder = (order, callback)=>{
 };
 
 trader.prototype.cancelOrder = (order, callback)=>{
-    let cancel
-}
+    let cancel = (err, result)=>{
+        if(err)
+            log.error('unable to cancel order', order, `( ${err},${result},)`);
+    };
+    cancel.bind(this);
+    this.btcc.cancelOrder(cancel, order, this.pair);
+};
+
+trader.getCapabilities = ()=> {
+    return {
+        name: 'BTCC',
+        slug: 'btcc',
+        currencies: ['BTC', 'CNY'],
+        assets: ['BTC', 'LTC'],
+        markets: [
+            { pair: ['CNY', 'BTC'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['CNY', 'LTC'], minimalOrder: { amount: 0.001, unit: 'asset' } },
+            { pair: ['BTC', 'LTC'], minimalOrder: { amount: 0.001, unit: 'asset' } }
+        ],
+        requires: ['key', 'secret'],
+        tid: 'tid',
+        providesFullHistory: true,
+    };
+};
+
+module.exports = trader;
