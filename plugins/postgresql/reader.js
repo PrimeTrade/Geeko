@@ -31,5 +31,32 @@ Reader.prototype.mostRecentWindow = function (from,to,next) {
     query.on('row', function (row) {
         row.push(row);
     });
-}
+    query.on('end', function () {
+        if(rows.length === 0){
+            return next(false);
+        }
+        if(rows.length === maxAmount){
+            return next({
+                from: from,
+                to: to,
+            });
+        }
+
+        let theMostRecent = _.first(rows).start;
+        let gapIndex = _.findIndex(rows, function (r,i) {
+            return r.start !==  theMostRecent - i*60;
+        });
+        if (gapIndex === -1){
+            let theLeastRecent = _.last(rows).start;
+            return next({
+                from: theMostRecent,
+                to: theMostRecent,
+            });
+        }
+        return next({
+            from: rows[gapIndex - 1].start,
+            to: theMostRecent,
+        });
+    });
+ }
 
