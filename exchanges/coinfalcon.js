@@ -27,6 +27,7 @@ let trader = function(config){
 
 let recoverableErrors = new RegExp(/(SOCKETTIMEDOUT|TIMEDOUT|CONNRESET|CONNREFUSED|NOTFOUND|429|522)/);
 
+
 trader.prototype.retry = function(methods,args,error){
 
 	let self = this;
@@ -194,7 +195,80 @@ trader.prototype.checkOrder = function(order, callback){
 };
 
 
+trader.prototype.cancelOrder = function(order, callback){
+
+	let arg = lodash.toArray(arguments);
+	
+	let success = function(res){
+		if(lodash.has(res, 'error')){
+			let err = new Error(res.error);
+			failure(err);
+		}	
+		else{
+			callback(false, rs.data.id);
+		}
+	};
+	
+	let failure = function(err){
+		log.error('[CoinFalcon] unable to cancel',err);
+		return this.retry(this.cancelOrder, arg, err);
+	}.bind(this);
+	
+	this.coinfalcon.delete('user/orders?id=' + order).then(success).catch(failure);
+	
+};
 
 
+trader.prototype.getTrades =  function(since, callback, descnding){
+	let arg = lodash.toArray(arguments);
+	
+	let success = function(res){
+	
+		let parsedTrades = [];
+		
+		lodash.each(res.data,function(trades){
+			parsedTrades.push({
+				tid: moment(trade.created_at).unix(), 
+				date: moment(trade.created_at).unix(),
+          		price: parseFloat(trade.price),
+          		amount: parseFloat(trade.size),
+			});
+		},this);
+		
+		descending ? callback(null,parsedTrades) : callback(null, parsedTrades.reverse());
+	}.bind(this);
+	
+	let failure = function(err){
+		err =new Error(err);
+		log.error('[CoinFalcon] error in getting trades' , err);
+		return this.retry(this.getTrades, args,err);
+	}.bind(this);
+	
+	let url = "markets/" + this.pair + "/trades"
+
+  	if (since) {
+    	url += '?since_time=' + (lodash.isString(since) ? since : since.toISOString());
+  	}
+
+  	this.coinfalcon.get(url).then(success).catch(failure);	
+}
 
 
+trader.getCapabilities = function () {
+  return {
+    name: 'CoinFalcon',
+    slug: 'coinfalcon',
+    assets: marketData.assets,
+    currencies: marketData.currencies,
+    markets: marketData.markets,
+    requires: ['key', 'secret'],
+    providesHistory: 'date',
+    providesFullHistory: true,
+    tid: 'tid',
+    tradable: true,
+    forceReorderDelay: false
+  };
+}
+
+//export the trader variable
+module.exports = trader;
