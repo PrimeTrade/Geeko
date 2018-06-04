@@ -80,3 +80,175 @@ trader.prototype.getTrades = function(since, callback, descending) {
 
   	this.quadriga.api('transactions', reqData, lodash.bind(process, this));
 };
+
+
+trader.prototype.getPortfolio = function(callback) {
+  	let args = lodash.toArray(arguments);
+  	let set = function(err, data) {
+
+    if (data && data.error) 
+    	return this.retry(this.getPortfolio, 'unable to get balance', args, data.error);
+    if (err) 
+    	return this.retry(this.getPortfolio, 'unable to get balance', args, err);
+
+    let assetAmount = parseFloat( data[this.asset.toLowerCase() + 'lodashavailable'] );
+    let currencyAmount = parseFloat( data[this.currency.toLowerCase() + 'lodashavailable'] );
+
+    if(!lodash.isNumber(assetAmount) || lodash.isNaN(assetAmount)) {
+      	log.error(`Quadriga did not return balance for ${this.asset.toLowerCase()}, assuming 0.`);
+      	assetAmount = 0;
+    }
+
+    if(!lodash.isNumber(currencyAmount) || lodash.isNaN(currencyAmount)) {
+      	log.error(`Quadriga did not return balance for ${this.currency.toLowerCase()}, assuming 0.`);
+      	currencyAmount = 0;
+    }
+
+    let portfolio = [{ name: this.asset, amount: assetAmount },{ name: this.currency, amount: currencyAmount }];
+    callback(err, portfolio);
+  	};
+
+  	this.quadriga.api('balance', lodash.bind(set, this));
+};
+
+
+trader.prototype.getFee = function(callback) {
+  callback(false, 0.005);
+};
+
+
+trader.prototype.getTicker = function(callback) {
+  	let set = function(err, data) {
+
+    if (data && data.error) 
+    	return this.retry(this.getTicker, 'unable to get quote', args, data.error);
+    if (err) 
+    	return this.retry(this.getTicker, 'unable to get quote', args, err);
+
+    let ticker = {ask: data.ask,bid: data.bid};
+    callback(err, ticker);
+  	};
+
+  	this.quadriga.api('ticker', {book: this.pair}, lodash.bind(set, this));
+};
+
+trader.prototype.roundAmount = function(amount) {
+  	let precision = 100000000;
+
+  	let parent = this;
+  	let market = trader.getCapabilities().markets.find(function(market){ return market.pair[0] === parent.currency && market.pair[1] === parent.asset });
+
+  	if(Number.isInteger(market.precision))
+    	precision = Math.pow(10, market.precision);
+ 
+  	amount *= precision;
+  	amount = Math.floor(amount);
+  	amount /= precision;
+  	return amount;
+};
+
+
+trader.prototype.addOrder = function(tradeType, amount, price, callback) {
+
+  	let args = lodash.toArray(arguments);
+
+  	amount = this.roundAmount(amount);
+  	log.debug(tradeType.toUpperCase(), amount, this.asset, '@', price, this.currency);
+
+  	let set = function(err, data) {
+
+    	if (data && data.error) 
+    		return this.retry(this.addOrder, 'unable to place order', args, data.error);
+    	
+    	if (err) 
+    		return this.retry(this.addOrder, 'unable to place order', args, err);
+    
+    	let txid = data.id;
+    	log.debug('added order with txid:', txid);
+
+    	callback(undefined, txid);
+  	};
+
+  	this.quadriga.api(tradeType, {book: this.pair,price: price,amount: amount}, lodash.bind(set, this));
+};
+
+
+trader.prototype.getOrder = function(order, callback) {
+  	let args = lodash.toArray(arguments);
+
+  	let get = function(err, data) {
+    	if (data && data.error) 
+    		return this.retry(this.getOrder, 'unable to get order', args, data.error);
+    	if (err) 
+    		return this.retry(this.getOrder, 'unable to get order', args, err);
+
+    	let price = parseFloat( data[0].price );
+    	let amount = parseFloat( data[0].amount );
+    	let date = (data[0].updated) ? moment.unix( data[0].updated ) : false;
+
+    	callback(undefined, {price, amount, date});
+  	}.bind(this);
+
+  	this.quadriga.api('lookuplodashorder', {id: order}, get);
+}
+
+
+trader.prototype.buy = function(amount, price, callback) {
+  	this.addOrder('buy', amount, price, callback);
+};
+
+
+trader.prototype.sell = function(amount, price, callback) {
+  	this.addOrder('sell', amount, price, callback);
+};
+
+trader.prototype.checkOrder = function(order, callback) {
+  	let args = lodash.toArray(arguments);
+  
+  	let check = function(err, data) {
+
+    	if (data && data.error) 
+    		return this.retry(this.checkOrder, 'unable to get order', args, data.error);
+    	if (err) 
+    		return this.retry(this.checkOrder, 'unable to get order', args, err);
+
+    	let result = data[0];
+    	let stillThere = result.status === 0 || result.status === 1;
+    	callback(err, !stillThere);
+  	};
+
+  	this.quadriga.api('lookuplodashorder', {id: order}, lodash.bind(check, this));
+};
+
+trader.prototype.cancelOrder = function(order, callback) {
+  	let args = lodash.toArray(arguments);
+  	let cancel = function(err, data) {
+
+    	if (data && data.error) 
+    		return this.retry(this.cancelOrder, 'unable to cancel order', args, data.error);
+    
+    	if (err) 
+    		return this.retry(this.cancelOrder, 'unable to cancel order', args, err);
+
+    	callback();
+  	};
+
+  	this.quadriga.api('cancellodashorder', {id: order}, lodash.bind(cancel, this));
+};
+
+
+trader.getCapabilities = function () {
+  	return {
+		name: 'Quadriga',
+    	slug: 'quadriga',
+    	currencies: marketData.currencies,
+    	assets: marketData.assets,
+    	markets: marketData.markets,
+    	requires: ['key', 'secret', 'username'],
+    	providesHistory: false,
+    	tid: 'tid',
+    	tradable: true
+  	};
+}
+
+module.exports = trader;
