@@ -113,6 +113,86 @@ trader.prototype.getOrder = function(order, callback){
 };
 
 
+trader.prototype.getPortfolio = function(callback) {
+  	var success = function(res) {
+    	if (lodash.has(res, 'error')) {
+      		var err = new Error(res.error);
+      		callback(err, null);
+    	} 
+    	else {
+      		let portfolio = res.data.map(function(account) {
+        		return {name: account.currency, amount: parseFloat(account.available)}
+      		});
+      		
+      		callback(null, portfolio);
+    	}
+  	};
+
+  	let failure = function(err) {
+    	log.error('[CoinFalcon] error getting portfolio', err);
+    	callback(err, null);
+  	}
+
+  	this.coinfalcon.get('user/accounts').then(success).catch(failure);
+};
+
+
+
+trader.prototype.addOrder = function(type, amount, price, callback){
+
+	let args = lodash.toArray(arguments);
+	let success = function(res){
+		if(lodash.has(res, 'error')){
+		
+			let err = new Error(res.error);
+			failure(err);
+		}
+		else{
+		
+			callback(false, res.data.id);
+		}
+	};
+	
+	let failure = function(err){
+		log.error('[CoinFalcon] unable to' + type.toLowerCase(), err);
+		return this.retry(this.addOrder,args,err);
+	}.bind(this);	
+	
+	let payload = { order_type: type, operation_type: 'limit_order', market: this.pair, size: amount, price:price};
+	
+	this.coinfalcon.post('user/orders', payload).then(success).catch(failure);
+};	
+
+
+['buy', 'sell'].map(function(type) {
+  	trader.prototype[type] = function(amount, price, callback) {
+    	this.addOrder(type, amount, price, callback);
+  	};
+});
+
+
+trader.prototype.checkOrder = function(order, callback){
+	let success = function(res){
+	
+		if(lodash.has(res, 'error')){
+			let err = new Error(res.error);
+			failure(err);
+		}
+		else{
+			let filled = res.data.status == "canceled" || res.data.status == "fulfilled";
+			callback(false, filled);
+		}
+	};
+	
+	let failure = function(err){
+		log.error('[CoinFalcon] unable to check order', err);
+		callback(err,null);
+	}.bind(this);
+	
+	this.coinfalcon.get('user/orders/' + order).then(success).catch(failure);
+
+};
+
 
 
 
