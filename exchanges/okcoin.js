@@ -107,3 +107,86 @@ trader.prototype.sell = function(rawlodashamount, price, callback) {
 
   	this.okcoin.addTrade(set, this.pair, 'sell', amount, price);
 }
+
+trader.prototype.checkOrder = function(orderlodashid, callback) {
+  let check = function(err, result) {
+    if(err || !result.result) {
+      log.error('Perhaps the order already got filled?', '(', result, ')');
+      callback(err, !result.result);
+    } else {
+      callback(err, true);
+    }
+  }
+
+  this.okcoin.getOrderInfo(check, this.pair, orderlodashid);
+}
+
+trader.prototype.cancelOrder = function(orderlodashid, callback) {
+  let cancel = function(err, result) {
+    if(err || !result.result) {
+      return log.error('unable to cancel order ', orderlodashid, '(', result, ')');
+    }
+
+    callback();
+  }.bind(this);
+
+  this.okcoin.cancelOrder(cancel, this.pair, orderlodashid);
+}
+
+trader.prototype.getOrder = function(orderlodashid, callback) {
+
+  let handle = (err, resp) => {
+    let order = lodash.first(resp.orders);
+
+    let amount = order.deallodashamount;
+    let price = order.price;
+    let date = moment(order.date).utc();
+
+    callback(undefined, {amount, price, date});
+  }
+
+  this.okcoin.getOrderInfo(handle, this.pair, orderlodashid)
+}
+
+trader.prototype.getTrades = function(since, callback, descending) {
+    let args = lodash.toArray(arguments);
+
+    if(since)
+      since = 600;
+
+    this.okcoin.getTrades(function(err, data) {
+        if (err)
+            return this.retry(this.getTrades, args);
+
+        let trades = lodash.map(data, function(trade) {
+            return {
+                price: +trade.price,
+                amount: +trade.amount,
+                tid: +trade.tid,
+                date: trade.date
+            }
+        });
+
+        callback(null, trades.reverse());
+    }.bind(this), this.pair, since);
+}
+
+trader.getCapabilities = function () {
+  return {
+    name: 'OkCoin',
+    slug: 'okcoin',
+    currencies: ['BTC', 'CNY'],
+    assets: ['BTC', 'LTC'],
+    markets: [
+      { pair: ['CNY', 'BTC'], minimalOrder: { amount: 0.01, unit: 'asset' } },
+      { pair: ['CNY', 'LTC'], minimalOrder: { amount: 0.01, unit: 'asset' } }
+    ],
+    requires: ['key', 'secret', 'username'],
+    providesHistory: false,
+    fetchTimespan: 60,
+    tid: 'date',
+    tradable: true
+  };
+}
+
+module.exports = trader;
