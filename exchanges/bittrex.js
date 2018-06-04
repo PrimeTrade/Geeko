@@ -41,14 +41,12 @@ trader.prototype.retry = (method, args)=> {
     log.debug(this.name, 'returned an error, retrying.', args);
 
     let self = this;
-
-
     _.each(args, (arg, i)=> {
         if(_.isFunction(arg))
             args[i] = _.bind(arg, self);
     });
 
-    //run again after some wait
+    //run again after waiting for some time
     setTimeout(
         function() { method.apply(self, args) },
         wait
@@ -193,3 +191,115 @@ trader.prototype.checkOrder = (order, callback)=> {
 
     this.bittrexApi.getopenorders({market: this.pair}, check);
 };
+
+trader.prototype.getOrder = (order, callback)=> {
+    let get = (result, err)=> {
+        log.debug('getOrder', 'called');
+        if(err)
+            return callback(err);
+
+        let price = 0;
+        let amount = 0;
+        let date = moment(0);
+
+        if(!result.success)
+            return callback(null, {price, amount, date});
+
+        let resultOrder = result.result;
+
+        price = resultOrder.Price;
+        amount = resultOrder.Quantity;
+
+        if(resultOrder.IsOpen) {
+            date = moment(resultOrder.Opened);
+        } else {
+            date = moment(resultOrder.Closed);
+        }
+
+        log.debug('getOrder', 'result', {price, amount, date});
+        callback(err, {price, amount, date});
+    };
+    get.bind(this);
+
+    this.bittrexApi.getorder({uuid: order}, get);
+};
+
+trader.prototype.cancelOrder = (order, callback)=> {
+    let args = _.toArray(arguments);
+    let cancel = (result, err)=> {
+        log.debug('cancelOrder', 'called', order);
+
+        if(err) {
+            if(err.success) {
+                log.error('unable to cancel order', order, '(', err, result, '), retrying');
+                return this.retry(this.cancelOrder, args);
+            } else {
+                log.error('unable to cancel order', order, '(', err, result, '), continue');
+                callback();
+                return;
+            }
+        }
+
+        if(!result.success && result.message === 'ORDER_NOT_OPEN') {
+            log.debug('getOrder', 'ORDER_NOT_OPEN: assuming already closed or executed');
+        }
+
+        log.debug('getOrder', 'result', result);
+
+        callback();
+    };
+    cancel.bind(this);
+
+    this.bittrexApi.cancel({uuid: order}, cancel);
+};
+
+trader.prototype.getTrades = (since, callback, descending)=> {
+
+    log.debug('getTrades called!', { descending: descending} );
+
+    let firstFetch = !!since;
+
+    let args = _.toArray(arguments);
+    let process = (data, err)=> {
+        if(err) {
+            log.error('Error getTrades()', err);
+            return this.retry(this.getTrades, args);
+        }
+
+        let result = data.result;
+
+        // Edge case, see here:
+        // @link https://github.com/askmike/gekko/issues/479
+        if(firstFetch && _.size(result) === 50000)
+            util.die(
+                [
+                    'Bittrex did not provide enough data. Read this:',
+                    'https://github.com/askmike/gekko/issues/479'
+                ].join('\n\n')
+            );
+
+        result = _.map(result, (trade)=> {
+            let mr = {
+                tid: trade.Id,
+                amount: +trade.Quantity,
+                date: moment.utc(trade.TimeStamp).unix(),
+                timeStamp: trade.TimeStamp,
+                price: +trade.Price
+            };
+            return mr;
+        });
+
+        callback(null, result.reverse());
+    };
+    process.bind(this);
+
+    let params = {
+        currencyPair: joinCurrencies(this.currency, this.asset)
+    };
+
+    if(since)
+        params.start = since.unix();
+
+    this.bittrexApi.getmarkethistory({ market: params.currencyPair }, process);
+};
+
