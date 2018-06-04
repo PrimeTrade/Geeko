@@ -103,6 +103,93 @@ trader.prototype.getPortfolio = (callback)=> {
         callback(err, portfolio);
     };
     set.bind(this);
-
     this.bittrexApi.getbalances(set);
+};
+
+trader.prototype.getTicker = (callback)=>{
+    let args = _.toArray(arguments);
+    log.debug('getTicker', 'called');
+    this.bittrexApi.getTicker({market: this.pair}, function(data, err){
+        if(err)
+            return this.retry(this.getTicker, args);
+        let tick = data.result;
+        log.debug('getTicker', 'result', tick);
+        callback(null, {
+            bid: parseFloat(tick.Bid),
+            ask: parseFloat(tick.Ask)
+        })
+    }.bind(this));
+};
+
+trader.prototype.getFee = (callback)=>{
+    log.debug('getFee', 'called');
+    callback(false, 0.00025);
+};
+
+trader.prototype.buy = (amount, price, callback)=>{
+    let args = _.toArray(arguments);
+    log.debug('buy', 'called', {amount: amount, price: price});
+    let set = (result, err)=>{
+        if(err || result.error){
+            if(err && err.message === 'INSUFFICIENT_FUNDS'){
+                //retry with reduced amount, will be reduced again in the recursive call
+                log.error('Error buy ', 'INSUFFICIENT FUNDS', err);
+                // correct the amount to avoid an INSUFFICIENT_FUNDS exception
+                let correctedAmount = amount - (0.00255*amount);
+                log.debug('buy', 'corrected amount', {amount: correctedAmount, price: price});
+                return this.retry(this.buy, [correctedAmount, price, callback]);
+            } else if (err && err.message === 'DUST_TRADE_DISALLOWED_MIN_VALUE_50K_SAT') {
+                callback(null, 'dummyOrderId');
+                return;
+            }
+            log.error('unable to buy:', {err: err, result: result});
+            return this.retry(this.buy, args);
+        }
+
+        log.debug('buy', 'result', result);
+        callback(null, result.result.uuid);
+    };
+    set.bind(this);
+
+    this.bittrexApi.buylimit({market: this.pair, quantity: amount, rate: price}, set);
+};
+
+trader.prototype.sell = (amount, price, callback)=> {
+    let args = _.toArray(arguments);
+
+    log.debug('sell', 'called', {amount: amount, price: price});
+
+    let set = (result, err)=> {
+        if(err || result.error) {
+            log.error('unable to sell:',  {err: err, result: result});
+
+            if(err && err.message === 'DUST_TRADE_DISALLOWED_MIN_VALUE_50K_SAT') {
+                callback(null, 'dummyOrderId');
+                return;
+            }
+
+            return this.retry(this.sell, args);
+        }
+
+        log.debug('sell', 'result', result);
+
+        callback(null, result.result.uuid);
+    };
+    set.bind(this);
+
+    this.bittrexApi.selllimit({market: this.pair, quantity: amount, rate: price}, set);
+};
+
+trader.prototype.checkOrder = (order, callback)=> {
+    let check = (result, err)=> {
+        log.debug('checkOrder', 'called');
+
+        let stillThere = _.find(result.result, function(o) { return o.OrderUuid === order });
+
+        log.debug('checkOrder', 'result', stillThere);
+        callback(err, !stillThere);
+    };
+    check.bind(this);
+
+    this.bittrexApi.getopenorders({market: this.pair}, check);
 };
