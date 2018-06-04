@@ -1,3 +1,5 @@
+//markset detection of outstanding orders
+
 const QuadrigaCX = require('quadrigacx');
 const moment = require('moment');
 const lodash = require('lodash');
@@ -5,6 +7,7 @@ const lodash = require('lodash');
 const util = require('../core/util');
 const log = require('../core/log');
 const marketData = require('./quadriga-markets.json');
+
 
 let trader = function(config) {
   	lodash.bindAll(this);
@@ -32,6 +35,7 @@ let trader = function(config) {
   );
 }
 
+//some of the helper functions
 trader.prototype.retry = function(method, warn, args, error) {
   	let wait = +moment.duration(30, 'seconds');
   	if (error.code === 200) 
@@ -58,6 +62,7 @@ trader.prototype.retry = function(method, warn, args, error) {
 };
 
 
+// functions for getting the details of trades
 trader.prototype.getTrades = function(since, callback, descending) {
   	let args = lodash.toArray(arguments);
   	let process = function(err, trades) {
