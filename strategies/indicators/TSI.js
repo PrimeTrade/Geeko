@@ -1,4 +1,4 @@
-let EMA = require('./EMA.js');
+let EMA = require('./Ema.js');
 
 let Indicator = function(settings) {
     this.input = 'candle';
