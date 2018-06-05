@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const log = require('../../core/log');
+const log = require('../core/log');
 
 let method = {
     init: () => {
