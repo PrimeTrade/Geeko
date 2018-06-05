@@ -148,3 +148,158 @@ trader.prototype.buy = function(amount, price, callback) {
     
     this.bitx.postBuyOrder(amount, price, process);
 }
+
+
+trader.prototype.sell = function(amount, price, callback) {
+    
+    let args = lodash.toArray(arguments);
+    let process = function(err, data) {
+        if (err) {
+            log.error('unable to sell', err.message);
+            return this.retry(this.sell, args);
+        }
+        
+        log.debug('order id: --> ', data.orderlodashid);
+        callback(err, data.orderlodashid);
+        
+    }.bind(this);
+    
+    log.debug(this.name, ': sell --- amount: ', amount, 'price: ', price);
+    this.bitx.postSellOrder(amount, price, process);
+}
+
+trader.prototype.getLotSize = function(tradeType, amount, price, callback) {
+    amount = this.roundAmount(amount, this.market.minimalOrder.precision);
+    
+    if (amount < this.market.minimalOrder.amount)
+        return callback(null, { amount: 0, price: 0 });
+        
+    callback(null, { amount: amount, price: price });
+}
+
+trader.prototype.getOrder = function(order, callback) {
+    let args = lodash.toArray(arguments);
+    if (order == null) 
+        return callback('no orderlodashid', false);
+        
+    let process = function(err, data) {
+        if (err) {
+            log.error('error --> ', err);
+            return this.retry(this.getOrder, args);
+        }
+        let price = 0;
+        let amount = 0;
+        let date = moment(0);
+        price = parseFloat(data.limitlodashprice);
+        amount = parseFloat(data.base);
+        
+        date = data.state === 'PENDING' ? moment(data.creationlodashtimestamp) : moment(data.completedlodashtimestamp);
+                       
+        log.debug('order --> price, amount, date --> ', price, amount, date);
+        callback(err, { price, amount, date });
+        
+    }.bind(this);
+    log.debug(this.name, ': getOrder --- order: ', order);
+    this.bitx.getOrder(order, process);
+}
+
+
+trader.prototype.checkOrder = function(order, callback) {
+    let args = lodash.toArray(arguments);
+    if (order == null) 
+        return callback('no orderlodashid', false);
+
+    let process = function(err, data) {
+        if (err) {
+            log.error('error --> ', err);
+            return this.retry(this.checkOrder, args);
+        }
+        
+        let stillThere = lodash.find(data.orders, function(o) {
+            return o.orderlodashid === order
+        });
+        
+        log.debug(this.name, ': checkOrder ---alreadyFilled? --> ', !stillThere);
+        callback(err, !stillThere);
+    }.bind(this);
+    this.bitx.getOrderList({ state: 'PENDING' }, process);
+}
+
+
+trader.prototype.cancelOrder = function(order, callback) {
+    let args = lodash.toArray(arguments);
+    let process = function(err, data) {
+        if (err) {
+        
+            if (lodash.contains(err.message, 'Invalid orderlodashid')) {
+                return log.error('unable to cancel order: ', order, '(', err.message, '), aborting...');
+            }
+            
+            if (lodash.contains(err.message, 'Cannot stop unknown')) {
+                log.error('unable to cancel order: ', order, '(', err.message, '), assuming success...');
+                callback();
+            } else {
+                log.error('unable to cancel order: ', order, '(', err, '), retrying...');
+                return this.retry(this.cancelOrder, args);
+            }
+            
+        }
+        log.debug('status--> ', data);
+        callback();
+    }.bind(this);
+    
+    log.debug(this.name, ': cancelOrder --- order: ', order);
+    this.bitx.stopOrder(order, process);
+}
+
+trader.prototype.getTrades = function(since, callback, descending) {
+    let args = lodash.toArray(arguments);
+    let process = function(err, result) {
+        if (err) {
+            log.error('error --> ', err);
+            return this.retry(this.getTrades, args);
+        }
+        trades = lodash.map(result.trades, function(t) {
+            return {
+                price: t.price,
+                date: Math.round(t.timestamp / 1000),
+                amount: t.volume,
+                tid: t.timestamp 
+            };
+        });
+
+        if (!descending) {
+            trades = trades.reverse()
+        }
+        callback(null, trades);
+    }.bind(this);
+
+    if(moment.isMoment(since)) since = since.valueOf();
+    (lodash.isNumber(since) && since > 0) ? since : since = 0;
+
+    this.bitx.getTrades({ since: since, pair: this.pair }, process);
+}
+
+trader.getCapabilities = function() {
+    return {
+        name: 'BitX',
+        slug: 'bitx',
+        currencies: ['MYR', 'KES', 'NGN', 'ZAR', 'XBT'],
+        assets: ['ETH', 'XBT'],
+        markets: [
+            { pair: ['XBT', 'ETH'], minimalOrder: { amount: 0.01, precision: 2 } },
+            { pair: ['MYR', 'XBT'], minimalOrder: { amount: 0.0005, precision: 6 } },
+            { pair: ['KES', 'XBT'], minimalOrder: { amount: 0.0005, precision: 6 } },
+            { pair: ['NGN', 'XBT'], minimalOrder: { amount: 0.0005, precision: 6 } },
+            { pair: ['ZAR', 'XBT'], minimalOrder: { amount: 0.0005, precision: 6 } },
+        ],
+        requires: ['key', 'secret'],
+        providesFullHistory: true,
+        providesHistory: 'date',
+        tid: 'tid',
+        tradable: true,
+        forceReorderDelay: true
+    };
+}
+
+module.exports = trader;
