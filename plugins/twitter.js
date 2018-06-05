@@ -14,7 +14,7 @@ let Twitter = function (done) {
     this.price = 'N/A';
     this.done = done;
     this.setup();
-};
+ };
 
 Twitter.prototype.setup = function (done) {
     let TwitterSetup = function (err,result) {
