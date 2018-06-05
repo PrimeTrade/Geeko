@@ -24,7 +24,7 @@ Twitter.prototype.setup = function (done) {
             access_token_key: config.access_token_key,
             access_token_secret: config.access_token_secret
         });
-        
+
         if(twitterConfig.sendMessageOnStart){
             let exchange = config.watch.exchange;
             let currency = config.watch.currency;
